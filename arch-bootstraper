@@ -1001,16 +1001,16 @@ function ohmyzsh {
 	echo -e "=============== OMZ =============== \n" 
 
 	touch /home/"$SUDOUSER"/omz.sh
-	{
-		sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-		sed -i -e 's/ZSH_THEME=.*/ZSH_THEME=\"pmcgee\"/' .zshrc
-		sed -i -e '/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true' .zshrc
-		sudo ln -s "$HOME"/.zshrc /root/.zshrc
-		sudo ln -s "$HOME"/.oh-my-zsh /root/.oh-my-zsh
-		git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
-		git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-		sed -i -e 's/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/' .zshrc
-	} > /home/"$SUDOUSER"/omz.sh
+
+	echo '#!/bin/bash' > /home/"$SUDOUSER"/omz.sh
+	echo 'sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"' >> /home/"$SUDOUSER"/omz.sh
+	echo 'sed -i -e "s/ZSH_THEME=.*/ZSH_THEME=\"pmcgee\"/" .zshrc' >> /home/"$SUDOUSER"/omz.sh
+	echo 'sed -i -e "/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true" .zshrc' >> /home/"$SUDOUSER"/omz.sh
+	echo 'sudo ln -s "$HOME"/.zshrc /root/.zshrc' >> /home/"$SUDOUSER"/omz.sh
+	echo 'sudo ln -s "$HOME"/.oh-my-zsh /root/.oh-my-zsh' >> /home/"$SUDOUSER"/omz.sh
+	echo 'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting' >> /home/"$SUDOUSER"/omz.sh
+	echo 'git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions' >> /home/"$SUDOUSER"/omz.sh
+	echo 'sed -i -e "s/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/" .zshrc' >> /home/"$SUDOUSER"/omz.sh
 
 	chown "$SUDOUSER" /home/"$SUDOUSER"/omz.sh
 
@@ -1037,11 +1037,9 @@ function optimizations {
 	touch /etc/modprobe.d/blacklists.conf
 
 	echo 'blacklist iTCO_wdt' > /etc/modprobe.d/blacklists.conf
-	{
-		echo 'blacklist joydev'
-		echo 'blacklist mousedev'
-		echo 'blacklist mac_hid'
-	} >> /etc/modprobe.d/blacklists.conf
+	echo 'blacklist joydev' >> /etc/modprobe.d/blacklists.conf
+	echo 'blacklist mousedev' >> /etc/modprobe.d/blacklists.conf
+	echo 'blacklist mac_hid' >> /etc/modprobe.d/blacklists.conf
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
@@ -1083,22 +1081,21 @@ function software {
 	echo -e "=============== SOFTWARE =============== \n" 
 
 	touch /home/"$SUDOUSER"/software.sh
-	{
-		yay -S baobab ntfs-3g exfatprogs \
-		xarchiver gparted zerotier-one wine playonlinux xrdp \
-		discord visual-studio-code-bin zerotier-gui-git \																																																																																																																																																																																																																																																																																																																																																																						 balena-etcher brave-bin exe-thumbnailer github-desktop preload \
-		notion-app teamviewer telegram-desktop preload \
-		brave-bin exe-thumbnailer github-desktop-bin \
-		wps-office xorgxrdp gobject-introspection libdbusmenu-gtk2 \
-		libdbusmenu-glib libdbusmenu-gtk3 appmenu-gtk-module numix-gtk-theme \
-		numix-icon-theme-git numix-circle-icon-theme-git
 
-		echo allowed_users=anybody > /etc/X11/Xwrapper.config
-		systemctl enable xrdp
-		systemctl enable xrdp-sesman
-		systemctl enable preload
-	} > /home/"$SUDOUSER"/software.sh
-
+	echo '!#/bin/bash' > /home/"$SUDOUSER"/software.sh
+	echo 'yay -S baobab ntfs-3g exfatprogs \' >> /home/"$SUDOUSER"/software.sh
+	echo 'xarchiver gparted zerotier-one wine playonlinux xrdp \' >> /home/"$SUDOUSER"/software.sh
+	echo 'discord visual-studio-code-bin zerotier-gui-git \	' >> /home/"$SUDOUSER"/software.sh
+	echo 'notion-app teamviewer telegram-desktop preload \' >> /home/"$SUDOUSER"/software.sh
+	echo 'brave-bin exe-thumbnailer github-desktop-bin \' >> /home/"$SUDOUSER"/software.sh
+	echo 'wps-office xorgxrdp gobject-introspection libdbusmenu-gtk2 \' >> /home/"$SUDOUSER"/software.sh
+	echo 'libdbusmenu-glib libdbusmenu-gtk3 appmenu-gtk-module numix-gtk-theme \' >> /home/"$SUDOUSER"/software.sh
+	echo 'numix-icon-theme-git numix-circle-icon-theme-git' >> /home/"$SUDOUSER"/software.sh
+	echo 'echo allowed_users=anybody > /etc/X11/Xwrapper.config' >> /home/"$SUDOUSER"/software.sh
+	echo 'systemctl enable xrdp' >> /home/"$SUDOUSER"/software.sh
+	echo 'systemctl enable xrdp-sesman' >> /home/"$SUDOUSER"/software.sh
+	echo 'systemctl enable preload' >> /home/"$SUDOUSER"/software.sh
+		
 	chown "$SUDOUSER" /home/"$SUDOUSER"/software.sh
 
 	echo "We create a script called software.sh in your home directory, after reboot, use chmod +x at software.sh"
