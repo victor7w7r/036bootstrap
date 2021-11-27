@@ -11,6 +11,8 @@ rm /tmp/hosttemp.sh* 2> /dev/null
 LOCALESTEMP=/tmp/localestemp.sh.$$
 HOSTTEMP=/tmp/hosttemp.sh.$$
 
+XRDPTOGGLE=0
+
 function cleanup { rm $LOCALESTEMP; $HOSTTEMP; exit; }
 
 trap cleanup; SIGHUP SIGINT SIGTERM
@@ -104,7 +106,7 @@ function verify {
     if [[ "$ORACLE" =~ \"Oracle.* ]]; then
 		echo "ready" &> /dev/null
 	else
-     	echo "ERROR: This script is only intended to run on Oracle Linux"
+		echo "ERROR: This script is only intended to run on Oracle Linux"
         exit 1
     fi
 
@@ -249,6 +251,8 @@ function graphical {
 	
 	if [ $response = 0 ]; then
 
+	XRDPTOGGLE=1
+
 		clear
 		echo -e "=============== EPEL & XFCE =============== \n" 
 		
@@ -340,33 +344,37 @@ function remote {
 
 	clear
 
-	echo -e "=============== XRDP ===============  \n" 
+	if [ $XRDPTOGGLE -eq 1 ]; then
 
-	LISTHOME=""
+		echo -e "=============== XRDP ===============  \n" 
 
-	dnf install xrdp --assumeyes 
+		LISTHOME=""
 
-	LISTHOME=$(ls /home)
+		dnf install xrdp --assumeyes 
 
-	for HOME in $LISTHOME; do
-		touch /home/"$HOME"/.Xclients
-		echo "xfce4-session" > /home/"$HOME"/.Xclients
-		chmod a+x /home/"$HOME"/.Xclients
-		chown "$HOME" /home/"$HOME"/.Xclients
-	done
+		LISTHOME=$(ls /home)
 
-	systemctl enable xrdp
-	systemctl enable xrdp-sesman
-	systemctl start xrdp
-	systemctl start xrdp-sesman
-	firewall-cmd --permanent --add-port=3389/tcp 
-	firewall-cmd --reload
-	chcon --type=bin_t /usr/sbin/xrdp
-	chcon --type=bin_t /usr/sbin/xrdp-sesman
+		for HOME in $LISTHOME; do
+			touch /home/"$HOME"/.Xclients
+			echo "xfce4-session" > /home/"$HOME"/.Xclients
+			chmod a+x /home/"$HOME"/.Xclients
+			chown "$HOME" /home/"$HOME"/.Xclients
+		done
 
-	echo " "
-	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+		systemctl enable xrdp
+		systemctl enable xrdp-sesman
+		systemctl start xrdp
+		systemctl start xrdp-sesman
+		firewall-cmd --permanent --add-port=3389/tcp 
+		firewall-cmd --reload
+		chcon --type=bin_t /usr/sbin/xrdp
+		chcon --type=bin_t /usr/sbin/xrdp-sesman
+
+		echo " "
+		echo -e "=============== OK =============== \n" 
+		read -r -p "Press Enter to continue..."
+	
+	fi
 
 }
 
@@ -459,7 +467,7 @@ function software {
 			-> yum-utils \n \
 			-> numix-gtk-theme \n \
 			-> numix-icon-theme \n \
-			-> numix-icon-theme-circle" 26 65
+			-> numix-icon-theme-circle" 20 65
 	clear
 	response=$?
 
@@ -468,7 +476,7 @@ function software {
 	clear
 	echo -e "=============== SOFTWARE =============== \n" 
 
-	dnf install -y baobab ntfs-3g gparted exfatprogs nautilus gedit tar yum-utils --assumeyes
+	dnf install baobab ntfs-3g gparted exfatprogs nautilus gedit tar yum-utils --assumeyes
 
 	dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm --assumeyes
 	dnf install numix-gtk-theme --assumeyes
