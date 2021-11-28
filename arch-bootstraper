@@ -1057,7 +1057,6 @@ function software {
 			-> exfat-utils \n \
 			-> xarchiver \n \
 			-> gparted \n \
-			-> zerotier-one \n \
 			-> wine \n \
 			-> exe-thumbnailer \n \
 			-> brave \n \
@@ -1082,16 +1081,17 @@ function software {
 
 	touch /home/"$SUDOUSER"/software.sh
 
+	echo allowed_users=anybody > /etc/X11/Xwrapper.config
+
 	echo '!#/bin/bash' > /home/"$SUDOUSER"/software.sh
 	echo 'yay -S baobab ntfs-3g exfatprogs \' >> /home/"$SUDOUSER"/software.sh
-	echo 'xarchiver gparted zerotier-one wine playonlinux xrdp \' >> /home/"$SUDOUSER"/software.sh
-	echo 'discord visual-studio-code-bin zerotier-gui-git \	' >> /home/"$SUDOUSER"/software.sh
+	echo 'xarchiver gparted wine playonlinux xrdp \' >> /home/"$SUDOUSER"/software.sh
+	echo 'discord visual-studio-code-bin \' >> /home/"$SUDOUSER"/software.sh
 	echo 'notion-app teamviewer telegram-desktop preload \' >> /home/"$SUDOUSER"/software.sh
 	echo 'brave-bin exe-thumbnailer github-desktop-bin \' >> /home/"$SUDOUSER"/software.sh
 	echo 'wps-office xorgxrdp gobject-introspection libdbusmenu-gtk2 \' >> /home/"$SUDOUSER"/software.sh
 	echo 'libdbusmenu-glib libdbusmenu-gtk3 appmenu-gtk-module numix-gtk-theme \' >> /home/"$SUDOUSER"/software.sh
 	echo 'numix-icon-theme-git numix-circle-icon-theme-git' >> /home/"$SUDOUSER"/software.sh
-	echo 'echo allowed_users=anybody > /etc/X11/Xwrapper.config' >> /home/"$SUDOUSER"/software.sh
 	echo 'systemctl enable xrdp' >> /home/"$SUDOUSER"/software.sh
 	echo 'systemctl enable xrdp-sesman' >> /home/"$SUDOUSER"/software.sh
 	echo 'systemctl enable preload' >> /home/"$SUDOUSER"/software.sh
