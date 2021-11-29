@@ -92,7 +92,7 @@ locale-gen
   - In some times, GRUB not works, i have this problem for a long time in the past and i don't have any response of research for fix this problem.
 
 - :warning: **Sid Sid Sid**
-  - This script use Debian Sid repositories for install, at this moment, i didn't have problems with Sid packages while testing, but this repository is some unstable, if you have problems in system packages, wait some days and try tu run the script again
+  - This script use Debian Sid repositories for install, at this moment, i didn't have problems with Sid packages while testing, but this repository is some unstable, if you have problems in system packages, wait some days and try to run the script again
 
 You must update the repositories of your GNU/Linux distro and install git, like this (run as superuser)
 
