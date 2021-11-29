@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ "$(id -u)" -ne 0 ]; then
-	echo "ERROR: You need to be root."
+	echo "ERROR: Necesitar ser root."
 	exit 1
 fi
 
@@ -93,10 +93,10 @@ function cover {
 
 function diskenv {
 
-    dialog --clear --backtitle "036 Creative Studios" --title "Disk Environment" \
-		--menu "Please choose your disk type \n" 15 50 4 \
-        HDD "Hard Drive Disk" \
-		SSD-NVMe "Solid State Disk or NVMe" 2>"${DISKENVTEMP}"
+    dialog --clear --backtitle "036 Creative Studios" --title "Entorno de Disco" \
+		--menu "Seleccione su tipo de disco para la instalación \n" 15 50 4 \
+        HDD "Disco Duro" \
+		SSD-NVMe "Disco Sólido o NVMe" 2>"${DISKENVTEMP}"
 
 	CHOICE=$(<"${DISKENVTEMP}")
 	case $CHOICE in
@@ -124,7 +124,7 @@ function verify {
 
 	if [ "$OPERATING" != "GNU/Linux" ]; then
 		clear
-		echo 'ERROR: Your Operating System is not GNU/Linux, exiting'
+		echo 'ERROR: Este sistema no es GNU/Linux, saliendo'
 		exit 1
 	fi
 	
@@ -132,12 +132,12 @@ function verify {
 		echo "ready" &> /dev/null
 	else
 		clear
-		echo "ERROR: This scripts only works in UEFI/EFI systems, consider change your PC or check your BIOS"
+		echo "ERROR: Este script sólo trabaja en UEFI/EFI, considera cambiar tu PC o verifica tu BIOS"
 		exit 1
 	fi
 
     if [ "$ARCH" != "x86_64" ]; then
-        echo "ERROR: This script is only intended to run on x86_64 PCs."
+        echo "ERROR: Este script sólo se ejecuta en procesadores de x86_64."
         exit 1
     fi
 
@@ -147,7 +147,7 @@ function verify {
 
 	if [ $res -eq 1 ]; then
 		clear
-		echo "ERROR: Arch Linux pacman is not available in this system, this system isn't Arch Linux?"
+		echo "ERROR: Arch Linux pacman no está disponible, ¿Acaso eso no es Arch Linux?"
 		exit 1
 	fi
 
@@ -155,11 +155,11 @@ function verify {
 
     if [[ "$PING" =~ unreachable* ]]; then
 		clear
-		echo "ERROR: This PC doesn't have internet connection, please check"
+		echo "ERROR: No tienes conexión a internet, por favor revisa e inténtalo de nuevo"
 		exit 1
 	fi
 
-    echo "Updating Arch Repositories..."
+    echo "Actualizando repositorios de Arch..."
     pacman -Sy &> /dev/null
 
     SELECTOR="lsb_release"
@@ -167,7 +167,7 @@ function verify {
 	local res=$?
 
 	if [ $res -eq 1 ]; then
-		echo "lsb_release is not available in this system, installing"
+		echo "lsb_release no está disponible, instalando"
 		pacman -S lsb-release --noconfirm &> /dev/null
 	fi
 
@@ -175,7 +175,7 @@ function verify {
 
 	if [ "$IS_ARCH" != "Arch" ]; then
 		clear
-		echo "ERROR: Your Operating System is not Arch Linux, exiting"
+		echo "ERROR: Tu sistema operativo no es Arch Linux, saliendo"
 		exit 1
 	fi
 
@@ -183,7 +183,7 @@ function verify {
 	whichverify "$SELECTOR"
 	local res=$?
 	if [ $res -eq 1 ]; then
-		echo "f2fs.tools is not available in this system, installing"
+		echo "f2fs.tools no está disponible, instalando"
 		pacman -S f2fs-tools --noconfirm &> /dev/null
 	fi
 
@@ -192,7 +192,7 @@ function verify {
 	local res=$?
 
 	if [ $res -eq 1 ]; then
-		echo "dialog is not available in this system, installing"
+		echo "dialog is no está disponible, instalando"
 		pacman -S dialog --noconfirm &> /dev/null
 	fi
 
@@ -201,13 +201,13 @@ function verify {
 	local res=$?
 
 	if [ $res -eq 1 ]; then
-		echo "pacstrap is not available in this system, installing"
+		echo "pacstrap no está disponible, instalando"
 		pacman -S arch-install-scripts --noconfirm &> /dev/null
 	fi
 
 	pacman -S ncurses --noconfirm &> /dev/null
 
-	echo "All dependencies is ok!"
+	echo "Todo ok!"
 
 	START=$(date +%s)
 	CHARS="/-\|"
@@ -223,16 +223,16 @@ function verify {
 
 function disclaimer {
 	clear
-	dialog --msgbox "DANGER!!!: Your destination device would be formatted and empty, formatting always cause data loss, PLEASE backup all your data before start" 8 70
+	dialog --msgbox "CUIDADO!!!: Tu dispositivo debe estar vacío y formateado, formatear siempre mata tus datos, POR FAVOR haz una copia antes de continuar" 8 70
 
 	if [ "$DISKENVIRONMENT" == "HDD" ] ; then
-		dialog --msgbox "Before installing, we recomend that your disk has the next partition scheme\n\n\
+		dialog --msgbox "Antes de instalar, se recomienda que tu disco tenga esta tabla de particiones\n\n\
 		GPT -> \n \
 		1.	/dev/sdX1	EFI			200MB		fat32		esp\n\
 		2.	/dev/sdX2	archlinux	>20GB		ext4		primary\n\
 		3.	/dev/sdx3	linux-swap	2GB-4GB		swap		primary\n\n\
 
-		GNU Parted script example  for format a 20GB disk\n\n \
+		GNU Parted script, es un ejemplo para un disco de 20GB\n\n \
 
 		mklabel gpt \ \n \
 		mkpart EFI fat32 1MiB 200MiB \ \n \
@@ -241,12 +241,12 @@ function disclaimer {
 		mkpart SWAP linux-swap 19.0GiB 100% \ \n" 20 70
 
 	elif [ "$DISKENVIRONMENT" == "SSD" ]; then
-	dialog --msgbox "Before installing, we recomend that your disk has the next partition scheme\n\n\
+	dialog --msgbox "Antes de instalar, se recomienda que tu disco tenga esta tabla de particiones\n\n\
 		GPT -> \n \
 		1.	/dev/sdX1	EFI			200MB		fat32		esp\n\
 		2.	/dev/sdX2	archlinux	>20GB		f2fs/ext4		primary\n\
 
-		GNU Parted script example for format a 20GB disk\n\n \
+		GNU Parted script, es un ejemplo para un disco de 20GB\n\n \
 
 		mklabel gpt \ \n \
 		mkpart EFI fat32 1MiB 200MiB \ \n \
@@ -266,7 +266,7 @@ function diskverify() {
 	BLOCK=""
 
 	if [ "$LABEL" == "dos" ]; then
-		echo "ERROR: The device has a DOS Label Type (MBR), this script only works with GPT"
+		echo "ERROR: Este dispositivo tiene una tabla de tipo DOS (MBR), este script sólo trabaja con GPT"
 		exit 1
 	fi
 
@@ -280,7 +280,7 @@ function diskverify() {
 			ROTATIONAL="$(cat /sys/block/"$BLOCK"/queue/rotational)"
 
 			if  [ "$ROTATIONAL" == "1" ]; then
-				echo "ERROR: You choose a SSD device, but this device is rotational, if is that not the case, that device is USB"
+				echo "ERROR: Elegiste como SSD, pero este dispositivo es rotacional, si no es el caso, entonces este dispositivo es USB"
 				exit 1
 			fi
 
@@ -290,17 +290,17 @@ function diskverify() {
 			ROTATIONAL="$(cat /sys/block/"$BLOCK"/queue/rotational)"
 
 			if  [ "$ROTATIONAL" == "0" ]; then
-				echo "ERROR: You choose a HDD device, but this device is not rotational, please check and run this script again"
+				echo "ERROR: Elegiste como HDD, pero este dispositivo no es rotational, por favor verifica y ejecuta este script otra vez"
 				exit 1
 			fi
 		fi
 
 		if [ "$EFI" == "" ]; then
-			echo "ERROR: The device doesn't have a EFI partition"
+			echo "ERROR: Este dispositivo no tiene una partición EFI"
 			exit 1
 		fi
 		if [ "$EFIORDER" == "" ]; then
-			echo "ERROR: The device has the EFI partition in other side than $1 1"
+			echo "ERROR: Este dispositivo tiene una partición EFI en otro lado que no sea $1 1"
 			exit 1
 		fi
 
@@ -313,16 +313,16 @@ function diskverify() {
 		EFIORDER=$(echo "$EFI" | sed -ne '/p1/p' )
 
 		if [ "$DISKENVIRONMENT" == "HDD" ]; then
-			echo "ERROR: You choose a HDD device, but this device is not rotational, please check and run this script again"
+			echo "ERROR: Elegiste como HDD, pero este dispositivo no es rotational, por favor verifica y ejecuta este script otra vez"
 			exit 1
 		fi
 
 		if [ "$EFI" == "" ]; then
-			echo "ERROR: The device doesn't have a EFI partition"
+			echo "ERROR: Este dispositivo no tiene una partición EFI"
 			exit 1
 		fi
 		if [ "$EFIORDER" == "" ]; then
-			echo "ERROR: The device has the EFI partition in other side than $1 1"
+			echo "ERROR: Este dispositivo tiene una partición EFI en otro lado que no sea $1 1"
 			exit 1
 		fi
 
@@ -335,16 +335,16 @@ function diskverify() {
 		EFIORDER=$(echo "$EFI" | sed -ne '/p1/p' )
 
 		if [ "$DISKENVIRONMENT" == "HDD" ]; then
-			echo "ERROR: You choose a HDD device, but this device is not rotational, please check and run this script again"
+			echo "ERROR: Elegiste como HDD, pero este dispositivo no es rotational, por favor verifica y ejecuta este script otra vez"
 			exit 1
 		fi
 
 		if [ "$EFI" == "" ]; then
-			echo "ERROR: The device doesn't have a EFI partition"
+			echo "ERROR: Este dispositivo no tiene una partición EFI"
 			exit 1
 		fi
 		if [ "$EFIORDER" == "" ]; then
-			echo "ERROR: The device has the EFI partition in other side than $1 1"
+			echo "ERROR: Este dispositivo tiene una partición EFI en otro lado que no sea $1 1"
 			exit 1
 		fi
 
@@ -371,7 +371,7 @@ function diskmenu {
 
 	if [ $COUNT -eq 0 ]; then
 		clear
-		echo "FATAL ERROR: There's not disks available in your system, please verify!!!"
+		echo "FATAL ERROR: No hay discos disponibles en tu sistema, por favor verifica!!!"
 		exit 1
 	fi
 
@@ -402,8 +402,8 @@ function diskmenu {
 		COUNT=$(( COUNT + 1 ))
 	done
 
-		dialog --clear --backtitle "036 Creative Studios" --title "Choose a device" \
-		--menu "Choose a device for install"\
+		dialog --clear --backtitle "036 Creative Studios" --title "Elige un dispositivo" \
+		--menu "Elige un dispositivo para instalar"\
 		15 50 4 "${ARRAY[@]}" 2>"${DISKMENUTEMP}"
 
 	CHOICE=$(<"${DISKMENUTEMP}")
@@ -451,12 +451,12 @@ function rootpartmenu {
 
 	if [ "$COUNTMOUNT" -eq $COUNT ]; then
 		clear
-		echo "ERROR: All the partitions of the device are mounted in your system, please unmount the desired partition"
+		echo "ERROR: Todas las particiones de este dispositivo están montadas, por favor desmonta tu partición de elección"
 		exit 1
 	fi
 
-	dialog --clear --backtitle "036 Creative Studios" --title "Select a root partition" \
-		--menu "Please select a partition \n" 15 50 4 "${ROOTPARTS[@]}" 2>"${ROOTPARTMENUTEMP}"
+	dialog --clear --backtitle "036 Creative Studios" --title "Partición de raíz" \
+		--menu "Por favor seleccione su partición de raíz \n" 15 50 4 "${ROOTPARTS[@]}" 2>"${ROOTPARTMENUTEMP}"
 
 	CHOICE=$(<"${ROOTPARTMENUTEMP}")
 	case $CHOICE in
@@ -510,12 +510,12 @@ function swapmenu() {
 
 		if [ "$COUNTMOUNT" -eq $COUNT ]; then
 			clear
-			echo "ERROR: All the partitions of the device are mounted in your system, please unmount the desired partition"
+			echo "ERROR: Todas las particiones de este dispositivo están montadas, por favor desmonta tu partición de elección"
 			exit 1
 		fi
 
-		dialog --clear --backtitle "036 Creative Studios" --title "Select a swap partition" \
-			--menu "Please select a swap partition \n" 15 50 4 "${SWAPPARTS[@]}" 2>"${SWAPPARTMENUTEMP}"
+		dialog --clear --backtitle "036 Creative Studios" --title "Seleccione la partición de swap" \
+			--menu "Por favor seleccione una partición de intercambio \n" 15 50 4 "${SWAPPARTS[@]}" 2>"${SWAPPARTMENUTEMP}"
 
 		CHOICE=$(<"${SWAPPARTMENUTEMP}")
 		case $CHOICE in
@@ -537,11 +537,11 @@ function diskformat {
 	fi
 
 	if [ $DISKENVIRONMENT == "HDD" ]; then
-		dialog --title "DANGER ZONE!!!" --backtitle "036 Creative Studios" \
-			--yesno "This partitions will be format Continue? \n$EFIPART (EFI) \n$ROOTPART (ROOT) \n$SWAPPART (SWAP)" 8 60
+		dialog --title "ZONA DE PELIBRO!!!" --backtitle "036 Creative Studios" \
+			--yesno "Estas particiones se van a formatear ¿Continuar? \n$EFIPART (EFI) \n$ROOTPART (ROOT) \n$SWAPPART (SWAP)" 8 60
 	elif [ $DISKENVIRONMENT == "SSD" ]; then
-		dialog --title "DANGER ZONE!!!" --backtitle "036 Creative Studios" \
-			--yesno "This partitions will be format Continue? \n$EFIPART (EFI) \n$ROOTPART (ROOT)" 7 60
+		dialog --title "ZONA DE PELIBRO!!!" --backtitle "036 Creative Studios" \
+			--yesno "Estas particiones se van a formatear ¿Continuar? \n$EFIPART (EFI) \n$ROOTPART (ROOT)" 7 60
 	fi
 
 	clear
@@ -551,7 +551,7 @@ function diskformat {
 
 		if [ $DISKENVIRONMENT == "HDD" ]; then
 
-			echo -e "=============== FORMAT ROOT FILESYSTEM AND SWAP =============== \n" 
+			echo -e "=============== FORMATEAR PARTICIONES DE RAIZ E INTERCAMBIO =============== \n" 
 
 			mkfs.ext4 "$ROOTPART"
 			mkswap "$SWAPPART"
@@ -559,23 +559,23 @@ function diskformat {
 
 			echo " "
 			echo -e "=============== OK =============== \n" 
-			read -r -p "Press Enter to continue..."
+			read -r -p "Presione Enter para continuar..."
 			clear
 	
 		elif [ $DISKENVIRONMENT == "SSD" ]; then
 
-			echo -e "=============== FORMAT ROOT FILESYSTEM =============== \n" 
+			echo -e "=============== FORMATEAR PARTICION DE RAIZ =============== \n" 
 
 			mkfs.f2fs -f "$ROOTPART"
 
 			echo " "
 			echo -e "=============== OK =============== \n" 
-			read -r -p "Press Enter to continue..."
+			read -r -p "Presione Enter para continuar..."
 			clear
 	
 		fi
 
-		echo -e "=============== FORMAT EFI AND MOUNT =============== \n" 
+		echo -e "=============== FORMATEAR EFI Y MONTARLO =============== \n" 
 
 		mkfs.fat -F32 "$EFIPART"
 		mount "$ROOTPART" /mnt
@@ -584,7 +584,7 @@ function diskformat {
 
 		echo " "
 		echo -e "=============== OK =============== \n" 
-		read -r -p "Press Enter to continue..."
+		read -r -p "Presione Enter para continuar..."
 		clear
 
 		pacstraper
@@ -609,13 +609,13 @@ function unmounter {
 	elif [ $DISKENVIRONMENT == "SSD" ]; then
 		umount "$ROOTPART"
 	fi
-	echo "unmounted filesystems succesfully"
+	echo "Particiones desmontadas de manera exitosa"
 	exit 0
 }
 
 function pacstraper {
 
-	echo -e "=============== PACSTRAP: INSTALL LINUX BASE AND CORE PACKAGES =============== \n" 
+	echo -e "=============== PACSTRAP: INSTALAR LA BASE DE LINUX Y PAQUETES CORE  =============== \n" 
 	
 	pacstrap /mnt base linux linux-firmware nano sudo vi vim git wget \
 	grub efibootmgr reflector os-prober rsync networkmanager neofetch \
@@ -625,7 +625,7 @@ function pacstraper {
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+	read -r -p "Presione Enter para continuar..."
 
 	toggler
 
@@ -637,8 +637,8 @@ function toggler {
 	arch-chroot /mnt ./arch-setupper.sh chroot $DISKENVIRONMENT
 
 	if [ -f /mnt/arch-setupper.sh ]; then
-        echo 'ERROR: Something failed inside the chroot, not unmounting filesystems so you can investigate.'
-        echo 'Please umount all partitions, and restart this script'
+        echo 'ERROR: Algo falló en el chroot, no se desmontarán los sistemas de archivos, así que puedes investigar.'
+        echo 'Por favor desmonta tus particiones y reinicia este script'
     fi
 
 	umount /mnt
@@ -649,17 +649,17 @@ function toggler {
 function configurator {
 	clear
 
-	echo -e "=============== ROOT PASSWORD FOR YOUR SYSTEM =============== \n" 
+	echo -e "=============== CONTRASEÑA DE ROOT PARA EL SISTEMA =============== \n" 
 
 	passwd
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+	read -r -p "Presione Enter para continuar..."
 
 	clear
 
-	echo -e "=============== CONFIGURE GRUB =============== \n" 
+	echo -e "=============== CONFIGURAR GRUB =============== \n" 
 
 	grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB
 	grub-mkconfig -o /boot/grub/grub.cfg
@@ -667,11 +667,11 @@ function configurator {
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+	read -r -p "Presione Enter para continuar..."
 
 	clear
 
-	echo -e "=============== START NETWORKMANAGER AND SSH SERVICES =============== \n" 
+	echo -e "=============== INICIAR NETWORKMANAGER Y SERVICIOS DE SSH =============== \n" 
 
 	systemctl enable NetworkManager
 	systemctl enable sshd
@@ -679,7 +679,7 @@ function configurator {
 	/etc/ssh/sshd_config &> /dev/null
 
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+	read -r -p "Presione Enter para continuar..."
 
 }
 
@@ -688,7 +688,7 @@ function hostnamer {
 	clear
 	dialog --title "Hostname" \
     --backtitle "036 Creative Studios" \
-    --inputbox "Please write your hostname (ex: A036-arch)" 8 80 2>"$HOSTTEMP"
+    --inputbox "Por favor escriba su hostname (ej: A036-arch)" 8 80 2>"$HOSTTEMP"
 
     RESPONSE=$?
     DATA=$(<$HOSTTEMP)
@@ -711,7 +711,7 @@ function hostnamer {
 function localer {
 
 	clear
-	dialog --msgbox "America/Guayaquil is the timezone by default, if you want to change, here is the command\n\n \
+	dialog --msgbox "America/Guayaquil es el timezone por defecto, si quieres cambiarlo por algún otro, aquí está la orden\n\n \
 		ln -sf /usr/share/zoneinfo/REGION/CITY /etc/localtime" 9 50
 
 	ln -sf /usr/share/zoneinfo/America/Guayaquil /etc/localtime
@@ -719,7 +719,7 @@ function localer {
 
 	dialog --clear --backtitle "036 Creative Studios" \
 		--title "Locale" \
-		--menu "Choose your locale, if you want to change to other locales, check the README of the Github of this project" 12 50 4 \
+		--menu "Elige tu Locale, si quieres cambiar a otros, revisa el README dentro del GitHub de este proyecto" 12 50 4 \
 		Spanish "es_ES" \
 		English "en_US" 2>"${LOCALESTEMP}"
 
@@ -749,9 +749,9 @@ function localer {
 function newuser {
 
 	clear
-	echo -e "=============== ADD A USER TO A SUDO GROUP =============== \n" 
+	echo -e "=============== AGREGAR UN USUARIO DE SUDO =============== \n" 
 	
-	read -r -p "Write your new user: " SUDOUSER
+	read -r -p "Escribe tu nuevo usuasrio: " SUDOUSER
 	useradd --create-home "$SUDOUSER"
 	passwd "$SUDOUSER"
 	usermod -aG wheel "$SUDOUSER"
@@ -759,7 +759,7 @@ function newuser {
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+	read -r -p "Presione Enter para continuar..."
 }
 
 function swapper {
@@ -780,11 +780,10 @@ function swapper {
 		echo "vm.swappiness=1" >> /etc/sysctl.d/99-sysctl.conf
 	fi
 
-	
+
 	echo " "
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
-
+	read -r -p "Presione Enter para continuar..."
 
 }
 
@@ -803,21 +802,21 @@ function xanmod {
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+	read -r -p "Presione Enter para continuar..."
 }
 
 function graphical {
 
 	clear
-	dialog --clear --title "Graphical Environment" \
+	dialog --clear --title "Entorno Gráfico" \
 	--backtitle "036 Creative Studios" \
-	--menu "Choose a GUI, these are the common used, this script recommends XFCE" 15 50 4 \
+	--menu "Selecciona un GUI, estos son los más usados, Este script recomienda XFCE" 15 50 4 \
 			XFCE "Xfce Desktop Environment" \
 			GNOME "GNOME Desktop Environment" \
 			KDE "KDE Desktop Environment" \
 			XORG "Minimal xorg Desktop" \
 			CUTEFISH "Cutefish Desktop (Beta)" \
-			NOGUI "No install GUI" 2>"${GRAPHICALTEMP}"
+			NOGUI "No Insstalar un GUI" 2>"${GRAPHICALTEMP}"
 
 	menuitem=$(<"${GRAPHICALTEMP}")
 
@@ -836,7 +835,7 @@ function graphical {
 
 				echo " "
 				echo -e "=============== OK =============== \n" 
-				read -r -p "Press Enter to continue..."
+				read -r -p "Presione Enter para continuar..."
 				return;;
 
 			GNOME) 
@@ -850,7 +849,7 @@ function graphical {
 
 				echo " "
 				echo -e "=============== OK =============== \n" 
-				read -r -p "Press Enter to continue..."
+				read -r -p "Presione Enter para continuar..."
 				return;;
 
 			KDE) 
@@ -864,7 +863,7 @@ function graphical {
 
 				echo " "
 				echo -e "=============== OK =============== \n" 
-				read -r -p "Press Enter to continue..."
+				read -r -p "Presione Enter para continuar..."
 				return;;
 
 			XORG) 
@@ -875,7 +874,7 @@ function graphical {
 
 				echo " "
 				echo -e "=============== OK =============== \n" 
-				read -r -p "Press Enter to continue..."
+				read -r -p "Presione Enter para continuar..."
 				return;;
 
 			CUTEFISH) 
@@ -887,7 +886,7 @@ function graphical {
 
 				echo " "
 				echo -e "=============== OK =============== \n" 
-				read -r -p "Press Enter to continue..."
+				read -r -p "Presione Enter para continuar..."
 				return;;
 
 			NOGUI) 
@@ -900,14 +899,14 @@ function graphical {
 function drivers {
 
 	clear
-	dialog --title "Graphical Drivers" \
+	dialog --title "Drivers de gráficos" \
 	--backtitle "036 Creative Studios" \
-	--menu "Choose your GPU drivers" 12 70 4 \
+	--menu "Elige tu controlador de GPU" 12 70 4 \
 			Intel "Intel Graphics" \
 			ATI "ATI Cards" \
 			AMD "AMD Cards" \
 			NVIDIA "NVIDIA Cards" \
-			VMware "If you are executing Arch Linux as a guest" 2>"${DRIVERSTEMP}"
+			VMware "Si tu estás usando Arch Linux como guest" 2>"${DRIVERSTEMP}"
 
 	menuitem=$(<"${DRIVERSTEMP}")
 
@@ -921,7 +920,7 @@ function drivers {
 
 				echo " "
 				echo -e "=============== OK =============== \n" 
-				read -r -p "Press Enter to continue..."
+				read -r -p "Presione Enter para continuar..."
 				return;;
 
 			ATI) 
@@ -932,8 +931,8 @@ function drivers {
 				pacman -S xf86-video-ati --noconfirm
 		
 				echo " "
-				echo -e "=============== AMD =============== \n" 
-				read -r -p "Press Enter to continue..."
+				echo -e "=============== OK =============== \n" 
+				read -r -p "Presione Enter para continuar..."
 				return;;
 
 			AMD) 
@@ -945,7 +944,7 @@ function drivers {
 
 				echo " "
 				echo -e "=============== OK =============== \n" 
-				read -r -p "Press Enter to continue..."
+				read -r -p "Presione Enter para continuar..."
 				return;;
 
 			NVIDIA) 
@@ -957,7 +956,7 @@ function drivers {
 
 				echo " "
 				echo -e "=============== OK =============== \n" 
-				read -r -p "Press Enter to continue..."
+				read -r -p "Presione Enter para continuar..."
 				return;;
 
 			VMware) 
@@ -970,7 +969,7 @@ function drivers {
 
 				echo " "
 				echo -e "=============== OK =============== \n" 
-				read -r -p "Press Enter to continue..."
+				read -r -p "Presione Enter para continuar..."
 				return;;
 
 			*) clear; exit 0;;
@@ -981,7 +980,7 @@ function drivers {
 function aur {
 
 	clear
-	echo -e "=============== AUR (YAY ASKS YOU YOUR PASSWORD, PAY ATTENTION) ===============  \n" 
+	echo -e "=============== AUR (YAY PREGUNTA POR TU CONTRASEÑA, ESTATE ATENTO) ===============  \n" 
 
 	pacman -S --needed base-devel fakeroot packer go --noconfirm
 
@@ -991,7 +990,7 @@ function aur {
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+	read -r -p "Presione Enter para continuar..."
 
 }
 
@@ -1014,18 +1013,18 @@ function ohmyzsh {
 
 	chown "$SUDOUSER" /home/"$SUDOUSER"/omz.sh
 
-	echo "We create a script called omz.sh in your home directory, after reboot, use chmod +x at omz.sh"
+	echo "Hemos creado un script llamado omz.sh en tu carpeta de home, después de reiniciar, usa chmod +x omz.sh"
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+	read -r -p "Presione Enter para continuar..."
 
 }
 
 function optimizations {
 
 	clear
-	echo -e "=============== OPTIMIZATIONS =============== \n" 
+	echo -e "=============== OPTIMIZACIONES =============== \n" 
 
 	sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=".*"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 nowatchdog"/' \
 		/etc/default/grub &> /dev/null
@@ -1043,14 +1042,14 @@ function optimizations {
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+	read -r -p "Presione Enter para continuar..."
 
 }
 
 function software {
 
-	dialog --title "More Sofware!!" --backtitle "036 Creative Studios" \
-		--yesno "This script has a little pack of software, Do you like it?\n \
+	dialog --title "Más Sofware!!" --backtitle "036 Creative Studios" \
+		--yesno "Este script tiene un pequeño pack de software, ¿Te gusta?\n \
 			-> baobab \n \
 			-> ntfs-3g \n \
 			-> exfatprogs \n \
@@ -1098,11 +1097,11 @@ function software {
 		
 	chown "$SUDOUSER" /home/"$SUDOUSER"/software.sh
 
-	echo "We create a script called software.sh in your home directory, after reboot, use chmod +x at software.sh"
+	echo "Hemos creado un script llamado software.sh en tu carpeta de home, después de reiniciar, usa chmod +x software.sh"
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+	read -r -p "Presione Enter para continuar..."
 
 
 	elif [ $response -eq 1 ]; then
@@ -1118,11 +1117,11 @@ function software {
 function finisher {
 
 	clear
-	dialog --msgbox 'READY!!!, Your PC is succesfully installed with Arch Linux, if you have errors, please report at 036bootstrap in GitHub' 7 50
+	dialog --msgbox 'LISTO!!!, Tu PC ya instalo de manera correcta a Arch Linux, si hubo errores, repórtalo en 036bootstrap / GitHub' 7 50
 	rm -f /arch-setupper.sh &> /dev/null
 	exit
 	clear
-	echo "Please reboot and remove your live media"
+	echo "Por favor reinicia y quita tu medio de live"
 
 }
 

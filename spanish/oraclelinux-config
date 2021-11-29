@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ "$(id -u)" -ne 0 ]; then
-	echo "ERROR: You need to be root."
+	echo "ERROR: Necesitar ser root."
 	exit 1
 fi
 
@@ -90,7 +90,7 @@ function verify {
 
 	if [ "$OPERATING" != "GNU/Linux" ]; then
 		clear
-		echo 'ERROR: Your Operating System is not GNU/Linux, exiting'
+		echo 'ERROR: Este sistema no es GNU/Linux, saliendo'
 		exit 1
 	fi
 	
@@ -98,21 +98,20 @@ function verify {
 		echo "ready" &> /dev/null
 	else
 		clear
-		echo "ERROR: This scripts only works in UEFI/EFI systems, consider change your PC or check your BIOS"
+		echo "ERROR: Este script sólo trabaja en UEFI/EFI, considera cambiar tu PC o verifica tu BIOS"
 		exit 1
 	fi
-
 
     if [[ "$ORACLE" =~ \"Oracle.* ]]; then
 		echo "ready" &> /dev/null
 	else
-		echo "ERROR: This script is only intended to run on Oracle Linux"
+		echo "ERROR: Este script sólo permite ejecutarse en Oracle Linux"
         exit 1
     fi
 
 	
     if [ "$ARCH" != "x86_64" ]; then
-        echo "ERROR: This script is only intended to run on x86_64 PCs."
+        echo "ERROR: Este script sólo se ejecuta en procesadores de x86_64."
         exit 1
     fi
 
@@ -122,7 +121,7 @@ function verify {
 
 	if [ $res -eq 1 ]; then
 		clear
-		echo "ERROR: DNF is not available in this system, this system isn't Oracle Linux?, please install Oracle Linux 8"
+		echo "ERROR: DNF no está disponible, ¿este sistema no es Oracle Linux?, instala Oracle Linux 8"
 		exit 1
 	fi
 
@@ -130,11 +129,11 @@ function verify {
 
     if [[ "$PING" =~ unreachable* ]]; then
 		clear
-		echo "ERROR: This PC doesn't have internet connection, please check"
+		echo "ERROR: No tienes conexión a internet, por favor revisa e inténtalo de nuevo"
 		exit 1
 	fi
 
-    echo "Updating Oracle Linux Repositories... Please Wait"
+    echo "Actualizando repositorios de Oracle Linux... Por favor, espere"
     dnf update --assumeyes &> /dev/null
 
 	SELECTOR="dialog"
@@ -142,12 +141,12 @@ function verify {
 	local res=$?
 
 	if [ $res -eq 1 ]; then
-		echo "dialog is not available in this system, installing"
+		echo "dialogno está disponible, instalando"
 		dnf install dialog --assumeyes &> /dev/null
 	fi
 	
 
-	echo "All dependencies is ok!"
+	echo "Todo ok!"
 
 	START=$(date +%s)
 	CHARS="/-\|"
@@ -164,12 +163,12 @@ function verify {
 function packages {
 	clear
 
-	echo -e "=============== CORE PACKAGES =============== \n" 
+	echo -e "=============== PAQUETES BASE =============== \n" 
 
 	dnf -y install net-tools wget nano zsh
 
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+	read -r -p "Presione Enter para continuar..."
 
 }
 
@@ -178,7 +177,7 @@ function hostnamer {
 	clear
 	dialog --title "Hostname" \
     --backtitle "036 Creative Studios" \
-    --inputbox "Please write your hostname (ex: A036-oracle)" 8 80 2>"$HOSTTEMP"
+    --inputbox "Por favor escriba su hostname (ex: A036-oracle)" 8 80 2>"$HOSTTEMP"
 
     RESPONSE=$?
     DATA=$(<$HOSTTEMP)
@@ -200,14 +199,14 @@ function hostnamer {
 function localer {
 
 	clear
-	dialog --msgbox "America/Guayaquil is the timezone by default, if you want to change, here is the command\n\n \
+	dialog --msgbox "America/Guayaquil es el timezone por defecto, si quieres cambiarlo por algún otro, aquí está la orden\n\n \
 		timedatectl set-timezone REGION/CITY" 9 50
 
 	timedatectl set-timezone America/Guayaquil
 
 	dialog --clear --backtitle "036 Creative Studios" \
 		--title "Locale" \
-		--menu "Choose your keyboard layout" 12 50 4 \
+		--menu "Elige tu distribución de teclado" 12 50 4 \
 		Spanish "es" \
 		English "us" 2>"${LOCALESTEMP}"
 
@@ -229,14 +228,14 @@ function localer {
 function cockpit {
 
 	clear
-	echo -e "=============== COCKPIT SERVICE (IP:9090) =============== \n" 
+	echo -e "=============== SERVICIO DE COCKPIT (IP:9090) =============== \n" 
 	
 	systemctl enable --now cockpit.socket
 	systemctl start cockpit.socket
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+	read -r -p "Presione Enter para continuar..."
 
 }
 
@@ -244,8 +243,8 @@ function graphical {
 
 	LISTHOME=""
 
-	dialog --title "Graphical" --backtitle "036 Creative Studios" \
-		--yesno "Install XFCE as Desktop Environment?" 7 60
+	dialog --title "Entorno Gráfico" --backtitle "036 Creative Studios" \
+		--yesno "¿Instalar XFCE como Entorno gráfico?" 7 60
 
 	response=$?
 	
@@ -254,7 +253,7 @@ function graphical {
 	XRDPTOGGLE=1
 
 		clear
-		echo -e "=============== EPEL & XFCE =============== \n" 
+		echo -e "=============== EPEL Y XFCE =============== \n" 
 		
 		dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm --assumeyes 
 		dnf update --assumeyes 
@@ -274,7 +273,7 @@ function graphical {
 
 		echo " "
 		echo -e "=============== OK =============== \n" 
-		read -r -p "Press Enter to continue..."
+		read -r -p "Presione Enter para continuar..."
 
 	else
 
@@ -285,7 +284,7 @@ function graphical {
 	
 		echo " "
 		echo -e "=============== OK =============== \n" 
-		read -r -p "Press Enter to continue..."
+		read -r -p "Presione Enter para continuar..."
 		return
 	fi
 
@@ -296,7 +295,7 @@ function drivers {
 	clear
 
 	dialog --title "VMware" --backtitle "036 Creative Studios" \
-		--yesno "This is a VMware Guest?" 8 60
+		--yesno "¿Este sistema es un invitado de Vmware?" 8 60
 
 	clear
 	response=$?
@@ -321,7 +320,7 @@ function remote {
 	clear
 
 	dialog --title "SSH" --backtitle "036 Creative Studios" \
-		--yesno "Permit Root Login?" 8 60
+		--yesno "Quieres permitir el superusuario al SSH?" 8 60
 
 	response=$?
 
@@ -338,7 +337,7 @@ function remote {
 
 		echo " "
 		echo -e "=============== OK =============== \n" 
-		read -r -p "Press Enter to continue..."
+		read -r -p "Presione Enter para continuar..."
 
 	fi
 
@@ -372,7 +371,7 @@ function remote {
 
 		echo " "
 		echo -e "=============== OK =============== \n" 
-		read -r -p "Press Enter to continue..."
+		read -r -p "Presione Enter para continuar..."
 	
 	fi
 
@@ -381,7 +380,7 @@ function remote {
 function kvm {
 
 	dialog --title "KVM" --backtitle "036 Creative Studios" \
-		--yesno "Install Oracle Linux KVM Suite?" 8 60
+		--yesno "¿Instalar el Suite de Oracle KVM?" 8 60
 
 	response=$?
 
@@ -411,7 +410,7 @@ function kvm {
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+	read -r -p "Presione Enter para continuar..."
 
 	elif [ $response -eq 1 ]; then
 		clear
@@ -446,18 +445,18 @@ function ohmyzsh {
 
 	done
 
-	echo "We create a script called omz.sh in your home directory, after reboot, use chmod +x at omz.sh"
+	echo "Hemos creado un script llamado omz.sh en tu carpeta de home, después de reiniciar, usa chmod +x omz.sh"
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+	read -r -p "Presione Enter para continuar..."
 
 }
 
 function software {
 
-	dialog --title "More Sofware!!" --backtitle "036 Creative Studios" \
-		--yesno "This script has a little pack of software, Do you like it?\n \
+	dialog --title "Más Sofware!!" --backtitle "036 Creative Studios" \
+		--yesno "Este script tiene un pequeño pack de software, ¿Te gusta?\n \
 			-> baobab \n \
 			-> ntfs-3g \n \
 			-> gparted \n \
@@ -471,7 +470,7 @@ function software {
 	clear
 	response=$?
 
-	if [ $response = 0 ]; then
+	if [ $response -eq 0 ]; then
 	
 	clear
 	echo -e "=============== SOFTWARE =============== \n" 
@@ -487,10 +486,10 @@ function software {
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
-	read -r -p "Press Enter to continue..."
+	read -r -p "Presione Enter para continuar..."
 
 
-	elif [ $response -eq 1 ] || [ $response -eq 255 ]; then
+	elif [ $response -eq 1 ]; then
 		clear
 		return
 	else
@@ -503,11 +502,10 @@ function software {
 function finisher {
 
 	clear
-	dialog --msgbox 'READY!!!, Your Server is succesfully configured, if you have errors, please report at 036bootstrap in GitHub' 7 50
+	dialog --msgbox 'LISTO!!!, Tu servidor ha sido configurado exitosamente, si tú tienes errores, repórtalo a 036bootstrap' 7 50
 	clear
-	echo "Please reboot your server to make changes"
+	echo "Por favor reiniciar tu servidor para hacer los cambios"
 	exit 0
-
 }
 
 core

@@ -264,7 +264,7 @@ function diskverify() {
 			ROTATIONAL="$(cat /sys/block/"$BLOCK"/queue/rotational)"
 
 			if  [ "$ROTATIONAL" == "0" ]; then
-				echo "ERROR: ou choose a HDD device, but this device is not rotational, please check and run this script again"
+				echo "ERROR: You choose a HDD device, but this device is not rotational, please check and run this script again"
 				exit 1
 			fi
 		fi
@@ -843,7 +843,6 @@ function graphical {
 			GNOME "GNOME Desktop Environment" \
 			KDE "KDE Desktop Environment" \
 			XORG "Minimal xorg Desktop" \
-			CUTEFISH "Cutefish Desktop (Beta)" \
 			NOGUI "No install GUI" 2>"${GRAPHICALTEMP}"
 
 	menuitem=$(<"${GRAPHICALTEMP}")
@@ -877,12 +876,12 @@ function graphical {
 
 			KDE) 
 
-			apt install -y task-kde-desktop ttf-ubuntu-font-family firefox \
-				grub-customizer nemo cinnamon-l10n
-
 				clear
 				echo -e "=============== KDE =============== \n" 
 	
+			apt install -y task-kde-desktop ttf-ubuntu-font-family firefox \
+				grub-customizer nemo cinnamon-l10n
+
 
 				echo " "
 				echo -e "=============== OK =============== \n" 
