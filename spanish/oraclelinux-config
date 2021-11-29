@@ -141,7 +141,7 @@ function verify {
 	local res=$?
 
 	if [ $res -eq 1 ]; then
-		echo "dialogno está disponible, instalando"
+		echo "dialog no está disponible, instalando"
 		dnf install dialog --assumeyes &> /dev/null
 	fi
 	
