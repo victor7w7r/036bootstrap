@@ -130,6 +130,17 @@ dpkg-reconfigure locales
 - :warning: **This is not a bootstraper**
   - This script assumes that Oracle Linux is installed
 
+You must update the repositories like this and install git, like this (run as superuser)
+
+```bash
+dnf update -y
+dnf install git -y
+git clone https://github.com/victor7w7r/036bootstrap/
+cd 036bootstrap
+chmod +x oraclelinux-config
+./oraclelinux-config #(If you are not superuser, use with sudo)
+```
+
 ## Spanish Folder?
 
 I born and live in Ecuador, of course i made a spanish scripts version, sorry for my bad english. :blush:
