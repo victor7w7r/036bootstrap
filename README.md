@@ -24,7 +24,7 @@ Bootstrap Scripts for Arch Linux/Debian and Oracle Linux Auto-Configuration Scri
 - :warning: **Only Works in x86_64 Processors, UEFI Systems and GPT Disks**
   - MBR systems is not compatible here
 
-- :warning: **This scripts use f2fs filesystem for SSD/NVMe devices**
+- :warning: **These scripts use f2fs filesystem for SSD/NVMe devices**
   - Is the best filesystem for Linux and friendly for NAND like devices
 
 - :warning: **Make a partition table before**
