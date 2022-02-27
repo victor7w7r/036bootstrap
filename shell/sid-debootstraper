@@ -1,0 +1,1029 @@
+#!/usr/bin/env bash
+
+if [ "$(id -u)" -ne 0 ]; then
+	echo "ERROR: You need to be root. / Necesitas ser superusuario."
+	exit 1
+fi
+
+rm /tmp/diskenvtemp.sh* 2> /dev/null
+rm /tmp/diskmenutemp.sh* 2> /dev/null
+rm /tmp/rootpartmenutemp.sh* 2> /dev/null
+rm /tmp/swapppartmenutemp.sh* 2> /dev/null
+rm /tmp/localestemp.sh* 2> /dev/null
+rm /tmp/hosttemp.sh* 2> /dev/null
+rm /tmp/graphicaltemp.sh* 2> /dev/null
+rm /tmp/driverstemp.sh* 2> /dev/null
+
+DISKMENUTEMP=/tmp/diskmenutemp.sh.$$	
+DISKENVTEMP=/tmp/diskenvtemp.sh.$$	
+ROOTPARTMENUTEMP=/tmp/rootpartmenutemp.sh.$$	
+SWAPPARTMENUTEMP=/tmp/swapppartmenutemp.sh.$$	
+LOCALESTEMP=/tmp/localestemp.sh.$$
+HOSTTEMP=/tmp/hosttemp.sh.$$
+GRAPHICALTEMP=/tmp/graphicaltemp.sh.$$
+DRIVERSTEMP=/tmp/driverstemp.sh.$$
+
+function cleanup { rm $DISKENVTEMP; rm $DISKMENUTEMP; rm $ROOTPARTMENUTEMP; 
+	rm $SWAPPARTMENUTEMP; rm $LOCALESTEMP; $HOSTTEMP; $GRAPHICALTEMP; $DRIVERSTEMP; exit; }
+
+trap cleanup &> /dev/null; SIGHUP SIGINT SIGTERM &> /dev/null
+
+DISKENVIRONMENT=""
+DISK=""; ROOTPART=""
+EFIPART=""; SWAPPART=""
+SUDOUSER=""; LANGUAGE=0
+
+function corelive { clear; language; cover; sleep 1s; verify; diskenv; }
+function corechroot { debian; configurator; hostnamer; localer; newuser; swapper; 
+					xanmod; graphical; ohmyzsh; optimizations; software; finisher; }
+
+function printer() {
+
+    local RED="\e[31m"; local GREEN="\e[32m"; local YELLOW="\e[33m"
+    local RESET="\e[0m"; local MESSAGE_TYPE=""; local MESSAGE=""
+    MESSAGE_TYPE="${1}"; POSITION="${2}"; ADDITIONAL="${3}";
+
+	local DICTIONARY_ENG=(
+		"Your Operating System is not GNU/Linux, exiting"
+		"This scripts only works in UEFI/EFI systems, consider change your PC or check your BIOS"
+		"This script is only intended to run on x86_64 PCs."
+		"This PC doesn't have internet connection, please check"
+		"f2fs-tools is not available in this system, please install it"
+		"dialog is not available in this system, please install it"
+		"debootstrap is not available in this system, please install it"
+		"All dependencies is ok!"
+		"The device has a DOS Label Type (MBR), this script only works with gpt"
+		"You choose a SSD device, but this device is rotational, if is that not the case, that device is USB"
+		"You choose a HDD device, but this device is not rotational, please check and run this script again"
+		"The device doesn't have a EFI partition"
+		"The device has the EFI partition in other side than $ADDITIONAL 1"
+		"There's not disks available in your system, please verify!!!"
+		"All the partitions of the device are mounted in your system, please unmount the desired partition"
+		"=============== FORMAT ROOT FILESYSTEM AND SWAP =============== \n" 
+		"=============== FORMAT ROOT FILESYSTEM =============== \n" 
+		"=============== FORMAT EFI AND MOUNT =============== \n" 
+		"unmounted filesystems succesfully"
+		"=============== DEBOOTSTRAP: INSTALL DEBIAN SID CORE =============== \n" 
+		"=============== DEBIAN: UPDATE SID REPOSITORIES =============== \n" 	
+		"=============== INSTALL CORE PACKAGES =============== \n" 	
+		"=============== GENERATE FSTAB AND ROOT PASSWORD FOR YOUR SYSTEM =============== \n" 
+		"=============== CONFIGURE GRUB =============== \n" 
+		"=============== START NETWORKMANAGER AND SSH SERVICES =============== \n" 
+		"=============== ADD A USER TO A SUDO GROUP =============== \n" 
+		"We create a script called omz.sh in your home directory, after reboot, use chmod +x at omz.sh"
+		"=============== OPTIMIZATIONS =============== \n" 
+		"Please reboot and remove your live media"
+
+	)
+
+	local DICTIONARY_ESP=(
+		"Este sistema no es GNU/Linux, saliendo"
+		"Este script sólo trabaja en UEFI/EFI, considera cambiar tu PC o verifica tu BIOS"
+		"Este script sólo se ejecuta en procesadores de x86_64."
+		"No tienes conexión a internet, por favor revisa e inténtalo de nuevo"
+		"f2fs-tools no está disponible en tu sistema, por favor instálalo"
+		"dialog no está disponible en tu sistema, por favor instálalo"
+		"debootstrap no está disponible en tu sistema, por favor instálalo"
+		"Todo ok!"
+		"Este dispositivo tiene una tabla de tipo DOS (MBR), este script sólo trabaja con GPT"
+		"Elegiste como SSD, pero este dispositivo es rotacional, si no es el caso, entonces este dispositivo es USB"
+		"Elegiste como HDD, pero este dispositivo no es rotacional, por favor verifica y ejecuta este script otra vez"
+		"Este dispositivo no tiene una partición EFI"
+		"Este dispositivo tiene una partición EFI en otro lado que no sea $ADDITIONAL 1"
+		"No hay discos disponibles en tu sistema, por favor verifica!!!"
+		"Todas las particiones de este dispositivo están montadas, por favor desmonta tu partición de elección"
+		"=============== FORMATEAR PARTICIONES DE RAIZ E INTERCAMBIO =============== \n" 
+		"=============== FORMATEAR PARTICION DE RAIZ =============== \n" 
+		"=============== FORMATEAR EFI Y MONTARLO =============== \n" 
+		"Particiones desmontadas de manera exitosa"
+		"=============== DEBOOTSTRAP: INSTALAR LA BASE DE DEBIAN SID =============== \n" 
+		"=============== DEBIAN: ACTUALIZAR REPOSITORIOS DE SID =============== \n" 	
+		"=============== INSTALAR PAQUETES BASE =============== \n" 
+		"=============== GENERAR FSTAB Y ONTRASEÑA DE ROOT PARA EL SISTEMA =============== \n" 
+		"=============== CONFIGURAR GRUB =============== \n" 
+		"=============== INICIAR NETWORKMANAGER Y SERVICIOS DE SSH =============== \n" 
+		"=============== AGREGAR UN USUARIO DE SUDO =============== \n" 
+		"Hemos creado un script llamado omz.sh en tu carpeta de home, después de reiniciar, usa chmod +x omz.sh"
+		"=============== OPTIMIZACIONES =============== \n" 
+		"Por favor reinicia y quita tu medio de live"
+	)
+
+	if [ "$LANGUAGE" -eq 1 ]; then
+		case ${MESSAGE_TYPE} in
+			print) echo -e "${DICTIONARY_ENG[$POSITION]}";;
+			info) echo -e "[${GREEN}+${RESET}] INFO: ${DICTIONARY_ENG[$POSITION]}";; 
+			warn) echo -e "[${YELLOW}*${RESET}] WARNING: ${DICTIONARY_ENG[$POSITION]}";; 
+			error) echo -e "[${RED}!${RESET}] ERROR: ${DICTIONARY_ENG[$POSITION]}";;
+			*) echo -e "[?] UNKNOWN: ${MESSAGE}";;
+		esac
+	else 
+		case ${MESSAGE_TYPE} in
+			print) echo -e "${DICTIONARY_ESP[$POSITION]}";;
+			info) echo -e "[${GREEN}+${RESET}] INFO: ${DICTIONARY_ESP[$POSITION]}";; 
+			warn) echo -e "[${YELLOW}*${RESET}] ADVERTENCIA: ${DICTIONARY_ESP[$POSITION]}";; 
+			error) echo -e "[${RED}!${RESET}] ERROR: ${DICTIONARY_ESP[$POSITION]}";;
+			*) echo -e "[?] UNKNOWN: ${MESSAGE}";;
+		esac
+	fi
+    
+}
+
+function reader() {
+
+	POSITION="${1}"
+
+	local DICTIONARY_ENG=(
+		"Disk Environment"
+		"Please choose your disk type \n" 
+		"Hard Drive Disk"
+		"Solid State Disk or NVMe"
+		"DANGER!!!: Your destination device would be formatted and empty, formatting always cause data loss, PLEASE backup all your data before start"
+		"Before installing, we recomend that your disk has the next partition scheme, before install\n\n"
+		"GNU Parted script example for format a 20GB disk\n\n"
+		"Choose a device" 
+		"Choose a device for install"
+		"Select a root partition"
+		"Please select a partition \n" 
+		"Select a swap partition"
+		"Please select a swap partition \n"
+		"DANGER ZONE!!!"
+		"This partitions will be format Continue? \n"
+		"Press Enter to continue..."
+		"This PC is a Laptop?" 
+		"Please write your hostname (ex: A036-debian)"
+		"America/Guayaquil is the timezone by default, if you want to change, here is the command\n\n \
+		ln -sf /usr/share/zoneinfo/REGION/CITY /etc/localtime" 
+		"Choose your locale, if you want to change to other locales, check the README of the Github of this project"
+		"Write your new user: "
+		"Graphical Environment"
+		"Choose a GUI, these are the common used, this script recommends XFCE" 
+		"More Sofware!!"
+		"This script has a little pack of software, Do you like it?\n"
+		'READY!!!, Your PC is succesfully installed with Debian Sid, if you have errors, please report at 036bootstraper in GitHub'
+	)
+
+	local DICTIONARY_ESP=(
+		"Entorno de Disco"
+		"Seleccione su tipo de disco para la instalación \n" 
+		"Disco Duro"
+		"Disco Sólido o NVMe"
+		"CUIDADO!!!: Tu dispositivo debe estar vacío y formateado, formatear siempre mata tus datos, POR FAVOR haz una copia antes de continuar"
+		"Antes de instalar, se recomienda que tu disco tenga esta tabla de particiones\n\n"
+		"GNU Parted script, es un ejemplo para un disco de 20GB\n\n"
+		"Elige un dispositivo"
+		"Elige un dispositivo para instalar"
+		"Partición de raíz"
+		"Por favor seleccione su partición de raíz \n"
+		"Seleccione la partición de swap"
+		"Por favor seleccione una partición de intercambio \n"
+		"ZONA DE PELIBRO!!!"
+		"Estas particiones se van a formatear ¿Continuar?"
+		"Presione Enter para continuar..."
+		"¿Esta es una Laptop?"
+		"Por favor escriba su hostname (ex: A036-debian)" 
+		"America/Guayaquil es el timezone por defecto, si quieres cambiarlo por algún otro, aquí está la orden\n\n \
+		ln -sf /usr/share/zoneinfo/REGION/CITY /etc/localtime"
+		"Elige tu Locale, si quieres cambiar a otros, revisa el README dentro del GitHub de este proyecto" 12 50 4 \
+		"Escribe tu nuevo usuario: "
+		"Entorno gráfico"
+		"Selecciona un GUI, estos son los más usados, Este script recomienda XFCE"
+		"Más Sofware!!"
+		"Este script tiene un pequeño pack de software, ¿Te gusta?\n "
+		'LISTO!!!, Tu PC ya instalo de manera correcta a Debian Sid, si hubo errores, repórtalo en 036bootstrap / GitHub' 
+	)
+
+	if [ "$LANGUAGE" -eq 1 ]; then
+		echo "${DICTIONARY_ENG[$POSITION]}"
+	else 
+		echo "${DICTIONARY_ESP[$POSITION]}"
+	fi
+
+}
+
+function commandverify() {
+	if ! command -v "$1" &> /dev/null; then return 1; else return 0; fi
+}
+
+function language {
+		
+	echo "Bienvenido / Welcome"
+	echo "Please, choose your language / Por favor selecciona tu idioma"
+	echo "1) English"
+	echo "2) Espanol"
+	read -n 1 -r OPTION
+
+	case $OPTION in
+		1) LANGUAGE=1;;
+		2) LANGUAGE=2;;
+		*) exit 1;;
+	esac
+}
+
+function cover {
+	
+	clear
+	echo '                                     `"~>v??*^;rikD&MNBQku*;`                                           '
+	echo '                                `!{wQNWWWWWWWWWWWWWWWNWWWWWWNdi^`                                       '
+	echo '                              .v9NWWWWNRFmWWWWWWWWWWWWga?vs0pNWWWMw!                                    '
+	echo '                            !9WWWWWWU>`>&WWWWWWUH!_JNWWWWWQz  ^EWWWWg|                                  '
+	echo '                           _SWWWWWNe: /RWWWWWWNNHBRuyix&WWWWWg2?-"VNWWW6_                               '
+	echo '                         "kWWWWWNz. .zNWWWWWWw=, ^NsLQNW**MWWWW&WQJuNWWWNr.                             '
+	echo '                       .FNWWWWNu. rL&WWWWWWg!!*;^Jo!*BN0aFx)>|!;;;;;!~\r)xFwaao?|,                      '
+	echo '                     .sNWWWWMi` -,#WWWWWWNi"` Siwu UWv  .;^|^;`               .!*lUSF*;                 '
+	echo '                    )BWWWWWo.   9NWWWWWW0; ;PvLc*aU&^ |L=-``.;>*=                   ;)wmkL_             '
+	echo '                  _QWWWWWq"   .aWWWWWWWs`  rF<>\^gQ, /i   ,;;.  !2                      ,*k0F\`         '
+	echo '                 *NWWWWNv   ,/&WWWWWWNr "!SL92l)BU.  ^x   x. L,  I_                        `>P&F;       '
+	echo '               `2WWWWWg;    !BWWWWWWD"   .s;!\xNa     /L,   !L`  P,                           .?&gr     '
+	echo '              ,QWWWWWS`  >;LWWWWWWWk`_;!\u|  ^Ml        ;~!^,  `iv                              `?Ng^   '
+	echo '             ^BWWWWWi   *i7NWWWWWWc "a;;?ii"~NV             `;?},                                 ,9WF  '
+	echo '            >WWWWWB!  ` ;8WWWWWWM=  r>`;F/2wNc          .;||!,                                      oW#.'
+	echo '           ?WWWWW#"  `2;7NWWWWW&_ =_=u%ir`>Wi                                                        PW6'
+	echo '          rWWWWWc   `||>WWWWWWU.  r^?7;!v*W)                                                         ,WW|'
+	echo '         ^NWWWB!  ! \jrmWWWWWw  `vL.k*\vkW$>rr*r;`        ;rL{7)>!`                                   mWF'
+	echo '        .BWWW$,   ,u. PWWWWW) ,r`)|)!__LWv     `;L"     |s>:```._|JuL                                 qWE'
+	echo '        uWWWH` .vi"Fo*WWWWN>   ^v  r*`>W}                                                             &Ws '
+	echo '       ;WWWP`  `=*ox_pWWWB; ^)i`9xr,#7W*            .     ,\*`                                       |WW! '
+	echo '       SWWD` >LLr^_y*NWWQ"  ,<?P~|iF0W}            ~;   v_ `o;                                      .0WU'
+	echo '      ^WW0,.!F2xULFi5WW0` >7vr!!z_`*Wv             `|;;^!,~!`                                      .8W8.'
+	echo '      dWN;`>JyrkIr`!NWN! ,uFia!9?*2WI                                                             ;QWD.'
+	echo '     =WW7`_S)~Fxv| xWWi ;}drqa=;=uWRNmL,                                                         rWWt`  '
+	echo '     DWP`;LiL;}c*rsWW&`,Po_e7L/ =Nc `>oD$aaw%ouic7)*r>=|^^~!;;;;;;;;;;;;;~^\>rvL{JctxiiiiuusoF2kgBS/  '
+	echo '    ;WN\\Uy>*rF.,pWWWr-;?J"vov^^Nu         `.,"_;!~^\=>r*v?LL{}Jjjjjjj}}7?vr>\^!;____-""",,,..``    '
+	echo '    iW?_**>^;>"~&EeWg=|liv*s!~?NL'
+	echo '    wWc*$>*~~L6Ni QW! \Uursx >WJ'
+	echo '    2M)o*_F "R0; .Wd~U7,``;*iN>'
+	echo '    xWe?vI7cMu`  ,W&>xssr~=PB|'
+	echo '    "W% ,cBZ_    `M2l\/i,,QQ,'
+	echo '     |U$di_       UBu>i)yBy`'
+	echo '                  ^Wx,rDR!'
+	echo '                   \ZUl^'
+	echo '.oPYo. .oPYo. .pPYo.   .oPYo.                       o   o                 .oPYo.   o              8  o                '
+	echo '8  .o8     `8 8        8    8                       8                     8        8              8                   '
+	echo '8 .P`8   .oP` 8oPYo.   8      oPYo. .oPYo. .oPYo.  o8P o8 o    o .oPYo.   `Yooo.  o8P o    o .oPYo8 o8 .oPYo. .oPYo.  '
+	echo '8.d` 8    `b. 8`  `8   8      8  `` 8oooo8 .oooo8   8   8 Y.  .P 8oooo8       `8   8  8    8 8    8  8 8    8 Yb..   '
+	echo '8o`  8     :8 8.  .P   8    8 8     8.     8    8   8   8 `b..d` 8.            8   8  8    8 8    8  8 8    8   `Yb. '
+	echo '`YooP` `YooP` `YooP`   `YooP` 8     `Yooo` `YooP8   8   8  `YP`  `Yooo`   `YooP`   8  `YooP` `YooP`  8 `YooP` `YooP. '
+	echo ':.....::.....::.....::::.....:..:::::.....::.....:::..::..::...:::.....::::.....:::..::.....::.....::..:.....::.....:'
+	echo ':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
+	echo ':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
+}
+
+function verify {
+
+    ARCH=$(uname -m); OPERATING=$(uname -o)
+	SELECTOR=""
+
+	if [ "$OPERATING" != "GNU/Linux" ]; then
+		clear; printer error 0; exit 1
+	fi
+	if [ -d /sys/firmware/efi ]; then
+		echo "ready" &> /dev/null
+	else
+		clear; printer error 1; exit 1
+	fi
+    if [ "$ARCH" != "x86_64" ]; then
+       clear; printer error 2; exit 1
+    fi
+
+    PING=$(ping -c 1 8.8.8.8 2>&1) 
+
+    if [[ "$PING" =~ unreachable* ]]; then
+		clear; printer error 3; exit 1
+	fi
+
+	SELECTOR="fsck.f2fs"; commandverify "$SELECTOR"; local res=$?
+	if [ $res -eq 1 ]; then
+        clear; printer error 4; exit 1
+	fi
+
+	SELECTOR="dialog"; commandverify "$SELECTOR"; local res=$?
+	if [ $res -eq 1 ]; then
+        clear; printer error 5; exit 1
+	fi
+
+    SELECTOR="debootstrap"; commandverify "$SELECTOR"; local res=$?
+
+	if [ $res -eq 1 ]; then
+		clear; printer error 6; exit 1
+	fi
+
+	printer print 7
+
+	START=$(date +%s); CHARS="/-\|"
+
+	while [[ $(($(date +%s) - START)) -lt 2 ]]; do
+		for (( i=0; i<${#CHARS}; i++ )); do
+			sleep 0.08; echo -en "${CHARS:$i:1}" "\r"
+		done
+	done
+
+}
+
+function diskenv {
+
+	RES1=$(reader 0); RES2=$(reader 1)
+	RES3=$(reader 2); RES4=$(reader 3)
+
+    dialog --clear --backtitle "036 Creative Studios" --title "$RES1" \
+		--menu "$RES2" 15 50 4 \
+        HDD "$RES3" \
+		SSD-NVMe "$RES4" 2>"${DISKENVTEMP}"
+
+	CHOICE=$(<"${DISKENVTEMP}")
+	case $CHOICE in
+		HDD) DISKENVIRONMENT="HDD"; disclaimer ;;
+        SSD-NVMe) DISKENVIRONMENT="SSD"; disclaimer ;;
+		*) clear; exit 0; ;;
+	esac
+
+}
+
+function disclaimer {
+
+	RES5=$(reader 4); RES6=$(reader 5); RES7=$(reader 6)
+
+	clear
+	dialog --msgbox "$RES5" 8 70
+
+	if [ "$DISKENVIRONMENT" == "HDD" ] ; then
+		dialog --msgbox "$RES6\n\n\
+		GPT -> \n \
+		1.	/dev/sdX1	EFI			200MB		fat32		esp\n\
+		2.	/dev/sdX2	debian  	>20GB		ext4		primary\n\
+		3.	/dev/sdx3	linux-swap	2GB-4GB		swap		primary\n\n\
+
+		$RES7 \
+
+		mklabel gpt \ \n \
+		mkpart EFI fat32 1MiB 200MiB \ \n \
+		set 1 esp on \ \n \
+		mkpart ROOT ext4 200MiB 19.0GiB \ \n \
+		mkpart SWAP linux-swap 19.0GiB 100% \ \n" 20 70
+
+	elif [ "$DISKENVIRONMENT" == "SSD" ]; then
+	dialog --msgbox "$RES6\n\n\
+		GPT -> \n \
+		1.	/dev/sdX1	EFI			200MB		fat32		esp\n\
+		2.	/dev/sdX2	debian	>20GB		f2fs/ext4		primary\n\
+
+		$RES7 \
+
+		mklabel gpt \ \n \
+		mkpart EFI fat32 1MiB 200MiB \ \n \
+		set 1 esp on \ \n \
+		mkpart ROOT f2fs 200MiB 100% \ \n" 20 70
+	fi
+	diskmenu
+
+}
+
+function diskverify() {
+
+	clear
+	LABEL=$(blkid -o value -s PTTYPE "$1")
+	local EFI=""; local EFIORDER=""; local BLOCK=""
+
+	if [ "$LABEL" == "dos" ]; then
+		clear; printer error 8; exit 1;
+	fi
+
+	if [[ $1 =~ sd[[:alpha:]] ]]; then
+
+		EFI=$(fdisk -l "$1" | sed -ne '/EFI/p')
+		EFIORDER=$(echo "$EFI" | sed -ne '/[[:alpha:]]1/p' )
+
+		if [ "$DISKENVIRONMENT" == "SSD" ]; then
+			BLOCK=$(echo "$1" | cut -d "/" -f3)
+			ROTATIONAL="$(cat /sys/block/"$BLOCK"/queue/rotational)"
+			if [ "$ROTATIONAL" == "1" ]; then clear; printer error 9; exit 1; fi
+
+		elif [ "$DISKENVIRONMENT" == "HDD" ]; then
+			BLOCK=$(echo "$1" | cut -d "/" -f3)
+			ROTATIONAL="$(cat /sys/block/"$BLOCK"/queue/rotational)"
+			if  [ "$ROTATIONAL" == "0" ]; then clear; printer error 10; exit 1; fi
+		fi
+
+		if [ "$EFI" == "" ]; then clear; printer error 11; exit 1; fi
+		if [ "$EFIORDER" == "" ]; then clear; printer error 12 "$1"; fi
+
+		DISK=$1
+		rootpartmenu
+
+	elif [[ $1 =~ mmcblk[[:digit:]] ]]; then
+
+		EFI=$(fdisk -l "$1" | sed -ne '/EFI/p')
+		EFIORDER=$(echo "$EFI" | sed -ne '/p1/p' )
+		if [ "$DISKENVIRONMENT" == "HDD" ]; then clear; printer error 10; exit 1; fi
+		if [ "$EFI" == "" ]; then clear; printer error 11; exit 1; fi
+		if [ "$EFIORDER" == "" ]; then clear; printer error 12 "$1"; fi
+		DISK=$1
+		rootpartmenu
+
+	elif [[ $1 =~ nvme[[:digit:]] ]]; then
+
+		EFI=$(fdisk -l "$1" | sed -ne '/EFI/p')
+		EFIORDER=$(echo "$EFI" | sed -ne '/p1/p' )
+		if [ "$DISKENVIRONMENT" == "HDD" ]; then clear; printer error 10; exit 1; fi
+		if [ "$EFI" == "" ]; then clear; printer error 11; exit 1; fi
+		if [ "$EFIORDER" == "" ]; then clear; printer error 12 "$1"; fi
+		DISK=$1
+		rootpartmenu
+
+	fi
+
+}
+
+function diskmenu {
+
+	clear
+	local COUNT=0; local BLOCK=(); local DIRTYDEVS=()
+	local MODEL=0; local DEVICE=0; local ARRAY=()
+
+	RES8=$(reader 7); RES9=$(reader 8)
+
+	DEVICES=$(find /dev/disk/by-path/ | sed 's/^\/dev\/disk\/by-path\///')
+
+	for DEVICE in $DEVICES; do
+		DIRTYDEVS[$COUNT]=$(readlink "/dev/disk/by-path/$DEVICE")
+		COUNT=$(( COUNT + 1 ))
+	done
+
+	if [ $COUNT -eq 0 ]; then clear; printer error 13; exit 1; fi
+
+	COUNT=0
+
+	for DEV in "${DIRTYDEVS[@]}"; do	
+		ABSOLUTEPARTS=$(echo "$DEV" | sed 's/^\.\.\/\.\.\//\/dev\//' | sed '/.*[[:alpha:]]$/d' | sed '/blk[[:digit:]]$/d' | sed '/nvme[[:digit:]]n[[:digit:]]$/d')
+		if [ "$ABSOLUTEPARTS" == "" ]; then
+			BLOCK[$BLOCKCOUNT]=$(echo "$DEV" | sed 's/^\.\.\/\.\.\///')
+			BLOCKCOUNT=$(( BLOCKCOUNT + 1 ))
+		fi
+	done
+
+	COUNT=0
+
+	for PART in "${BLOCK[@]}"; do
+		DEVICE="/dev/$PART"
+		BLOCKSTAT="${BLOCK[$COUNT]}"
+		SIZE=$(lsblk -no SIZE /dev/"$PART" | head -1 | sed s/..//)
+		MODEL="$(cat /sys/class/block/"$BLOCKSTAT"/device/model)"
+		ARRAY+=("$DEVICE" "$MODEL $SIZE")
+		COUNT=$(( COUNT + 1 ))
+	done
+
+	dialog --clear --backtitle "036 Creative Studios" --title "$RES8" \
+	--menu "$RES9"\
+	15 50 4 "${ARRAY[@]}" 2>"${DISKMENUTEMP}"
+
+	CHOICE=$(<"${DISKMENUTEMP}")
+
+	case $CHOICE in
+		"$CHOICE") diskverify "$CHOICE";;
+		*) clear; exit 0;;
+	esac
+}
+
+function rootpartmenu {
+
+	clear; RES10=$(reader 9); RES11=$(reader 10)
+
+	local VERIFY=""; local TYPE=""; local COUNT=0
+	local COUNTMOUNT=0; local ISMOUNTED=0
+	local ROOTPARTS=()
+
+	EFIPART=$(fdisk -l "$DISK" | sed -ne /EFI/p | cut -d " " -f1)
+
+	if [[ $DISK =~ sd[[:alpha:]] ]]; then
+		VERIFY=$(find "$DISK"* | sed '/[[:alpha:]]$/d')
+	elif [[ $DISK =~ mmcblk[[:digit:]] ]]; then
+		VERIFY=$(find "$DISK"* | sed '/k[[:digit:]]$/d')
+	elif [[ $DISK =~ nvme[[:digit:]]n[[:digit:]] ]]; then
+		VERIFY=$(find "$DISK"* | sed '/e[[:digit:]]n[[:digit:]]$/d')
+	fi
+
+	for PART in $VERIFY; do
+		if [ "$PART" != "$EFIPART" ]; then
+			ISMOUNTED=$(lsblk "$PART" | sed -ne '/\//p')
+			if [ "$ISMOUNTED" != "" ]; then
+				COUNTMOUNT=$(( COUNTMOUNT + 1 ))
+			else
+				ROOTPARTS+=("$PART" "$TYPE")
+			fi
+			COUNT=$((COUNT + 1))
+		fi
+	done
+
+	if [ "$COUNTMOUNT" -eq $COUNT ]; then printer error 14; exit 1; fi
+
+	dialog --clear --backtitle "036 Creative Studios" --title "$RES10" \
+		--menu "$RES11" 15 50 4 "${ROOTPARTS[@]}" 2>"${ROOTPARTMENUTEMP}"
+
+	CHOICE=$(<"${ROOTPARTMENUTEMP}")
+	case $CHOICE in
+		"$CHOICE") ROOTPART="$CHOICE"; swapmenu "$CHOICE" ;;
+		*) clear; exit 0; ;;
+	esac
+}
+
+function swapmenu() {
+
+	clear; RES12=$(reader 11); RES13=$(reader 12)
+	if [ "$1" == "" ]; then clear; exit 0; fi
+
+	if [ $DISKENVIRONMENT == "HDD" ]; then
+
+		VERIFY=""; TYPE=""; COUNT=0
+		COUNTMOUNT=0; ISMOUNTED=0
+		SWAPPARTS=()
+
+		if [[ $DISK =~ sd[[:alpha:]] ]]; then
+			VERIFY=$(find "$DISK"* | sed '/[[:alpha:]]$/d')
+		elif [[ $DISK =~ mmcblk[[:digit:]] ]]; then
+			VERIFY=$(find "$DISK"* | sed '/k[[:digit:]]$/d')
+		elif [[ $DISK =~ nvme[[:alpha:]] ]]; then
+			VERIFY=$(find "$DISK"* | sed '/e[[:digit:]]$/d')
+		fi
+
+		for PART in $VERIFY; do
+			if [ "$PART" != "$EFIPART" ]; then
+				if [ "$PART" != "$ROOTPART" ]; then
+					ISMOUNTED=$(lsblk "$PART" | sed -ne '/\//p')
+					if [ "$ISMOUNTED" != "" ]; then
+						COUNTMOUNT=$(( COUNTMOUNT + 1 ))
+					else
+						SWAPPARTS+=("$PART" "$TYPE")
+					fi
+						COUNT=$((COUNT + 1))
+				fi
+			fi
+		done
+
+	if [ "$COUNTMOUNT" -eq $COUNT ]; then printer error 14; exit 1; fi
+
+		dialog --clear --backtitle "036 Creative Studios" --title "$RES12" \
+			--menu "$RES13" 15 50 4 "${SWAPPARTS[@]}" 2>"${SWAPPARTMENUTEMP}"
+
+		CHOICE=$(<"${SWAPPARTMENUTEMP}")
+		case $CHOICE in
+			"$CHOICE") SWAPPART="$CHOICE"; diskformat "$CHOICE" ;;
+			*) clear; exit 0; ;;
+		esac
+
+	elif [ $DISKENVIRONMENT == "SSD" ]; then
+		diskformat "pass"
+	fi
+
+}
+
+function diskformat {
+
+	if [ "$1" == "" ]; then clear; exit 0; fi
+	clear; RES14=$(reader 13); RES15=$(reader 14)
+	RES16=$(reader 15)
+
+	if [ $DISKENVIRONMENT == "HDD" ]; then
+		dialog --title "$RES14" --backtitle "036 Creative Studios" \
+			--yesno "$RES15 $EFIPART (EFI) \n$ROOTPART (ROOT) \n$SWAPPART (SWAP)" 8 60
+	elif [ $DISKENVIRONMENT == "SSD" ]; then
+		dialog --title "$RES14" --backtitle "036 Creative Studios" \
+			--yesno "$RES15 $EFIPART (EFI) \n$ROOTPART (ROOT)" 7 60
+	fi
+	clear; response=$?
+
+	if [ $response = 0 ]; then
+		if [ $DISKENVIRONMENT == "HDD" ]; then
+			printer print 15; mkfs.ext4 "$ROOTPART"
+			mkswap "$SWAPPART"; swapon "$SWAPPART"
+			echo " "
+			echo -e "=============== OK =============== \n" 
+			read -r -p "$RES16"
+			clear
+		elif [ $DISKENVIRONMENT == "SSD" ]; then
+			printer print 16; mkfs.f2fs -f "$ROOTPART"
+			echo " "
+			echo -e "=============== OK =============== \n" 
+			read -r -p "$RES16"
+			clear
+		fi
+
+		printer print 17; mkfs.fat -F32 "$EFIPART"
+		mount "$ROOTPART" /mnt; mkdir /mnt/boot
+		mkdir /mnt/boot/efi; mount "$EFIPART" /mnt/boot/efi
+
+		echo " "
+		echo -e "=============== OK =============== \n" 
+		read -r -p "$RES16"
+		clear; debootstraper
+
+
+	elif [ $response -eq 1 ] || [ $response -eq 255 ]; then
+		clear; exit 0
+	else
+		clear; exit 0
+	fi
+	
+}
+
+function unmounter {
+	clear
+	if [ $DISKENVIRONMENT == "HDD" ]; then
+		umount /mnt/proc/
+		umount /mnt/sys/
+		umount /mnt/dev/
+		umount "$ROOTPART"
+		swapoff "$SWAPPART"
+	elif [ $DISKENVIRONMENT == "SSD" ]; then
+		umount "$ROOTPART"
+	fi
+	printer print 18; exit 0
+}
+
+function debootstraper {
+
+	clear; RES16=$(reader 15); printer print 19; 
+	debootstrap --arch amd64 sid /mnt https://deb.debian.org/debian/
+    mount -t proc /proc /mnt/proc/
+    mount -t sysfs /sys /mnt/sys/
+    mount -o bind /dev /mnt/dev/
+
+	echo " "
+	echo -e "=============== OK =============== \n" 
+	read -r -p "$RES16"; toggler
+}
+
+function toggler {
+
+	cp "$0" /mnt/deb-setupper.sh
+    chroot /mnt /bin/bash ./deb-setupper.sh chroot $DISKENVIRONMENT "$EFIPART" "$ROOTPART" "$SWAPPART" $LANGUAGE
+	unmounter
+	exit 0
+}
+
+function debian {
+
+	clear; RES16=$(reader 15); printer print 20; 
+
+	echo "deb http://deb.debian.org/debian sid main contrib non-free" > /etc/apt/sources.list
+	echo "deb-src http://deb.debian.org/debian sid main contrib non-free" >> /etc/apt/sources.list
+
+	apt update
+
+	echo " "
+	echo -e "=============== OK =============== \n" 
+	read -r -p "$RES16"
+	clear; printer print 21 
+
+	apt install -y sudo locales git wget aptitude grub-efi-amd64 vim \
+		grub-efi efibootmgr net-tools network-manager-gnome dialog \
+		openssh-server python rsync screen unrar p7zip zsh linux-image-amd64 \
+		firmware-linux firmware-linux-free firmware-linux-nonfree util-linux gnupg
+
+	echo " "
+	echo -e "=============== OK =============== \n" 
+	read -r -p "$RES16"
+	clear
+
+}
+
+function configurator {
+
+	clear; RES16=$(reader 15); RES17=$(reader 16)
+
+	dialog --title "Laptop" --backtitle "036 Creative Studios" \
+        --yesno "$RES17" 8 60
+
+	response=$?
+	if [ $response = 0 ]; then clear; tasksel install laptop; fi
+	clear; printer print 22
+	SDA1=$(/usr/sbin/blkid -s UUID -o value "$EFIPART")
+	SDA2=$(/usr/sbin/blkid -s UUID -o value "$ROOTPART")
+
+	if [ $DISKENVIRONMENT == "HDD" ]; then
+		SDA3=$(/usr/sbin/blkid -s UUID -o value "$SWAPPART")
+		{
+			echo "UUID=$SDA2          /             ext4      defaults              1      1"
+			echo "UUID=$SDA1          /boot/efi     vfat      defaults              0      0"
+			echo "UUID=$SDA3          none          swap      sw                    0      0"
+		} > /etc/fstab
+
+	elif [ $DISKENVIRONMENT == "SSD" ]; then
+		{
+			echo "UUID=$SDA2          /             f2fs      discard               1      1"
+			echo "UUID=$SDA1          /boot/efi     		vfat      defaults              0      0"
+		} > /etc/fstab
+	fi
+
+	passwd
+
+	echo " "
+	echo -e "=============== OK =============== \n" 
+	read -r -p "$RES16"
+
+	clear; printer print 23
+
+	/usr/sbin/grub-install --target=x86_64-efi \
+		--boot-directory=/boot --efi-directory=/boot/efi --bootloader-id=GRUB
+	/usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg
+	umount /boot/efi
+
+	echo " "
+	echo -e "=============== OK =============== \n" 
+	read -r -p "$RES16"
+
+	clear; printer print 24
+
+	systemctl enable NetworkManager &> /dev/null
+	systemctl enable ssh &> /dev/null
+	sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin Yes/' \
+		/etc/ssh/sshd_config &> /dev/null
+	echo -e "=============== OK =============== \n" 
+	read -r -p "$RES16"
+
+}
+
+function hostnamer {
+
+	clear; RES18=$(reader 17)
+	dialog --title "Hostname" \
+    --backtitle "036 Creative Studios" \
+    --inputbox "$RES18" 8 80 2>"$HOSTTEMP"
+
+    RESPONSE=$?; DATA=$(<$HOSTTEMP)
+
+    case $RESPONSE in
+    0) 
+		echo "${DATA}" > /etc/hostname
+		echo "127.0.1.1        ${DATA}" >> /etc/hosts
+		return;;
+    1) 
+        clear; exit 0  
+        return;;
+    255) 
+        clear; exit 0
+        return;;
+    esac
+	
+}
+
+function localer {
+
+	clear; RES19=$(reader 18); RES20=$(reader 19)
+	dialog --msgbox "$RES19" 9 50
+
+	ln -sf /usr/share/zoneinfo/America/Guayaquil /etc/localtime
+	hwclock --systohc
+
+	dialog --clear --backtitle "036 Creative Studios" \
+		--title "Locale" \
+		--menu "$RES20" 12 50 4 \
+		Spanish "es_ES" \
+		English "en_US" 2>"${LOCALESTEMP}"
+
+	menuitem=$(<"${LOCALESTEMP}")
+
+	case $menuitem in
+		Spanish) 
+			clear
+			sed -i 's/^# es_ES.UTF-8 UTF-8/es_ES.UTF-8 UTF-8/' /etc/locale.gen &> /dev/null
+			echo 'LANG="es_ES.UTF-8"' >/etc/default/locale
+			echo 'LC_TIME="es_ES.UTF-8"' >> /etc/default/locale
+			echo 'LANGUAGE="es_EC:es_ES:es"' >> /etc/default/locale
+			return;;
+		English) 
+			clear
+			sed -i 's/^# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &> /dev/null
+			locale-gen
+			echo 'LANG="en_US.UTF-8"' > /etc/locale.conf
+			echo 'LC_TIME="en_US.UTF-8"' >> /etc/locale.conf
+			echo 'LANGUAGE="es_US:en"' >> /etc/locale.conf
+			return;;
+		*) clear; exit 0;;
+	esac
+}
+
+function newuser {
+
+	clear; printer print 25
+	RES16=$(reader 15); RES21=$(reader 20)
+
+	read -r -p "$RES21" SUDOUSER
+	/usr/sbin/adduser "$SUDOUSER"
+	/usr/sbin/usermod -aG sudo "$SUDOUSER"
+
+	echo " "
+	echo -e "=============== OK =============== \n" 
+	read -r -p "$RES16"
+}
+
+function swapper {
+
+	clear; RES16=$(reader 15)
+	echo -e "=============== SWAPPING =============== \n" 
+
+	if [ $DISKENVIRONMENT == "HDD" ]; then
+		echo "vm.swappiness=60" >> /etc/sysctl.conf
+	elif [ $DISKENVIRONMENT == "SSD" ]; then
+		dd if=/dev/zero of=/swapfile bs=1M count=1024 status=progress
+		chmod 600 /swapfile
+		mkswap /swapfile
+		swapon /swapfile
+		echo "swapfile none swap defaults 0 0" >> /etc/fstab
+		echo "vm.swappiness=1" >> /etc/sysctl.conf
+	fi
+
+	echo " "
+	echo -e "=============== OK =============== \n" 
+	read -r -p "$RES16"
+
+
+}
+
+function xanmod {
+
+	clear; RES16=$(reader 15)
+	echo -e "=============== XANMOD KERNEL =============== \n" 
+	
+	echo 'deb http://deb.xanmod.org releases main' | tee /etc/apt/sources.list.d/xanmod-kernel.list
+	wget -qO - https://dl.xanmod.org/gpg.key | apt-key --keyring /etc/apt/trusted.gpg.d/xanmod-kernel.gpg add -
+	apt update && apt install linux-xanmod -y
+	apt remove linux-image-amd64 -y
+
+	echo " "
+	echo -e "=============== OK =============== \n" 
+	read -r -p "$RES16"
+}
+
+function graphical {
+
+	clear; RES16=$(reader 15); RES22=$(reader 21)
+	RES23=$(reader 22)
+	dialog --clear --title "$RES22" \
+	--backtitle "036 Creative Studios" \
+	--menu "$RES23" 15 50 4 \
+			XFCE "Xfce Desktop Environment" \
+			GNOME "GNOME Desktop Environment" \
+			KDE "KDE Desktop Environment" \
+			XORG "Minimal xorg Desktop" \
+			NOGUI "No install GUI" 2>"${GRAPHICALTEMP}"
+
+	menuitem=$(<"${GRAPHICALTEMP}")
+
+	case $menuitem in
+		XFCE) 
+			clear
+			echo -e "=============== XFCE =============== \n" 
+			apt install -y xserver-xorg xfce4 xfce4-goodies xfce4-indicator-plugin \
+			ttf-ubuntu-font-family firefox gdm3 grub-customizer nemo cinnamon-l10n
+			echo " "
+			echo -e "=============== OK =============== \n" 
+			read -r -p "$RES16"
+			return;;
+		GNOME) 
+			clear
+			echo -e "=============== GNOME =============== \n" 
+			apt install -y task-gnome-desktop \
+			ttf-ubuntu-font-family firefox grub-customizer nemo cinnamon-l10n
+			echo " "
+			echo -e "=============== OK =============== \n" 
+			read -r -p "$RES16"
+			return;;
+		KDE) 
+			clear
+			echo -e "=============== KDE =============== \n" 
+			apt install -y task-kde-desktop ttf-ubuntu-font-family firefox \
+			grub-customizer nemo cinnamon-l10n
+			echo " "
+			echo -e "=============== OK =============== \n" 
+			read -r -p "$RES16"
+			return;;
+		XORG) 
+			clear
+			echo -e "=============== XORG ONLY =============== \n" 
+			apt install -y xserver-xorg
+			echo " "
+			echo -e "=============== OK =============== \n" 
+			read -r -p "$RES16"
+			return;;
+		NOGUI) s
+			return;;
+		*) clear; exit 0;;
+	esac
+}
+
+function ohmyzsh {
+
+	clear; RES16=$(reader 15)
+	echo -e "=============== OMZ =============== \n" 
+
+	touch /home/"$SUDOUSER"/omz.sh
+
+	echo '#!/bin/bash' > /home/"$SUDOUSER"/omz.sh
+	echo 'sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"' >> /home/"$SUDOUSER"/omz.sh
+	echo 'sed -i -e "s/ZSH_THEME=.*/ZSH_THEME=\"pmcgee\"/" .zshrc' >> /home/"$SUDOUSER"/omz.sh
+	echo 'sed -i -e "/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true" .zshrc' >> /home/"$SUDOUSER"/omz.sh
+	echo 'sudo ln -s "$HOME"/.zshrc /root/.zshrc' >> /home/"$SUDOUSER"/omz.sh
+	echo 'sudo ln -s "$HOME"/.oh-my-zsh /root/.oh-my-zsh' >> /home/"$SUDOUSER"/omz.sh
+	echo 'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting' >> /home/"$SUDOUSER"/omz.sh
+	echo 'git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions' >> /home/"$SUDOUSER"/omz.sh
+	echo 'sed -i -e "s/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/" .zshrc' >> /home/"$SUDOUSER"/omz.sh
+
+	chown "$SUDOUSER" /home/"$SUDOUSER"/omz.sh
+	printer print 26
+	echo " "
+	echo -e "=============== OK =============== \n" 
+	read -r -p "$RES16"
+}
+
+function optimizations {
+
+	clear; printer print 27; RES16=$(reader 15)
+	sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=".*"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 nowatchdog"/' \
+		/etc/default/grub &> /dev/null
+	/usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg
+	systemctl mask lvm2-monitor
+	echo " "
+	echo -e "=============== OK =============== \n" 
+	read -r -p "$RES16"
+
+}
+
+function software {
+	
+ 	RES16=$(reader 15); RES24=$(reader 23); RES25=$(reader 24)
+
+	dialog --title "$RES24" --backtitle "036 Creative Studios" \
+		--yesno "$RES25 \
+			-> gdebi \n \
+			-> synaptic \n \
+			-> aptitude \n \
+			-> libwnck-common \n \
+			-> libwnck22 \n \
+			-> baobab \n \
+			-> hfsutils \n \
+			-> hfsprogs \n \
+			-> ntfs-3g \n \
+			-> exfat-fuse \n \
+			-> exfat-utils \n \
+			-> gparted \n \
+			-> xarchiver \n \
+			-> wine \n \
+			-> playonlinux  \n \
+			-> preload  \n \
+			-> xrdp" 26 65
+	response=$?; echo $?
+
+	if [ $response -eq 0 ]; then
+	
+		clear
+		echo -e "=============== SOFTWARE =============== \n" 
+
+		apt install -y gdebi synaptic aptitude libwnck-common \
+			libwnck22 baobab hfsutils hfsprogs ntfs-3g \
+			exfat-fuse exfat-utils gparted xarchiver wine playonlinux xrdp preload \
+			numix-gtk-theme numix-icon-theme-circle
+			
+		adduser xrdp ssl-cert
+		systemctl enable xrdp
+		systemctl enable xrdp-sesman
+		systemctl enable preload
+		systemctl mask lvm2-monitor
+
+		echo " "
+		echo -e "=============== OK =============== \n" 
+		read -r -p "$RES16"
+
+	elif [ $response -eq 1 ]; then clear; return
+	else clear; exit 0
+	fi
+
+}
+
+function finisher {
+
+	clear; RES26=$(reader 25)
+	dialog --msgbox "$RES26" 7 50
+	rm -f /deb-setupper.sh &> /dev/null
+	clear
+	umount /mnt/boot/efi &> /dev/null
+	printer print 28;
+	exit
+
+}
+
+if [ "$1" == "chroot" ]; then
+	DISKENVIRONMENT=$2
+	EFIPART=$3; ROOTPART=$4
+	SWAPPART=$5; LANGUAGE=$6
+	corechroot
+else
+	corelive
+fi
+
+[ -f $DISKENVTEMP ] && rm $DISKENVTEMP 
+[ -f $DISKMENUTEMP ] && rm $DISKMENUTEMP 
+[ -f $ROOTPARTMENUTEMP ] && rm $ROOTPARTMENUTEMP
+[ -f $SWAPPARTMENUTEMP ] && rm $SWAPPARTMENUTEMP
+[ -f $LOCALESTEMP ] && rm $LOCALESTEMP
+[ -f $HOSTTEMP ] && rm $HOSTTEMP
+[ -f $GRAPHICALTEMP ] && rm $GRAPHICALTEMP
+[ -f $DRIVERSTEMP ] && rm $DRIVERSTEMP
