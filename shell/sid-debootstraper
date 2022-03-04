@@ -183,7 +183,7 @@ function reader() {
 		"Por favor escriba su hostname (ex: A036-debian)" 
 		"America/Guayaquil es el timezone por defecto, si quieres cambiarlo por algún otro, aquí está la orden\n\n \
 		ln -sf /usr/share/zoneinfo/REGION/CITY /etc/localtime"
-		"Elige tu Locale, si quieres cambiar a otros, revisa el README dentro del GitHub de este proyecto" 12 50 4 \
+		"Elige tu Locale, si quieres cambiar a otros, revisa el README dentro del GitHub de este proyecto"
 		"Escribe tu nuevo usuario: "
 		"Entorno gráfico"
 		"Selecciona un GUI, estos son los más usados, Este script recomienda XFCE"
@@ -282,7 +282,7 @@ function verify {
 		clear; printer error 1; exit 1
 	fi
     if [ "$ARCH" != "x86_64" ]; then
-       clear; printer error 2; exit 1
+		clear; printer error 2; exit 1
     fi
 
     PING=$(ping -c 1 8.8.8.8 2>&1) 
@@ -302,7 +302,6 @@ function verify {
 	fi
 
     SELECTOR="debootstrap"; commandverify "$SELECTOR"; local res=$?
-
 	if [ $res -eq 1 ]; then
 		clear; printer error 6; exit 1
 	fi
@@ -633,6 +632,9 @@ function unmounter {
 		umount "$ROOTPART"
 		swapoff "$SWAPPART"
 	elif [ $DISKENVIRONMENT == "SSD" ]; then
+		umount /mnt/proc/
+		umount /mnt/sys/
+		umount /mnt/dev/
 		umount "$ROOTPART"
 	fi
 	printer print 18; exit 0
@@ -785,7 +787,7 @@ function localer {
 		Spanish) 
 			clear
 			sed -i 's/^# es_ES.UTF-8 UTF-8/es_ES.UTF-8 UTF-8/' /etc/locale.gen &> /dev/null
-			echo 'LANG="es_ES.UTF-8"' >/etc/default/locale
+			echo 'LANG="es_ES.UTF-8"' > /etc/default/locale
 			echo 'LC_TIME="es_ES.UTF-8"' >> /etc/default/locale
 			echo 'LANGUAGE="es_EC:es_ES:es"' >> /etc/default/locale
 			return;;
@@ -793,9 +795,9 @@ function localer {
 			clear
 			sed -i 's/^# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &> /dev/null
 			locale-gen
-			echo 'LANG="en_US.UTF-8"' > /etc/locale.conf
-			echo 'LC_TIME="en_US.UTF-8"' >> /etc/locale.conf
-			echo 'LANGUAGE="es_US:en"' >> /etc/locale.conf
+			echo 'LANG="en_US.UTF-8"' > /etc/default/locale
+			echo 'LC_TIME="en_US.UTF-8"' >> /etc/default/locale
+			echo 'LANGUAGE="es_US:en"' >> /etc/default/locale
 			return;;
 		*) clear; exit 0;;
 	esac
@@ -904,7 +906,7 @@ function graphical {
 			echo -e "=============== OK =============== \n" 
 			read -r -p "$RES16"
 			return;;
-		NOGUI) s
+		NOGUI) 
 			return;;
 		*) clear; exit 0;;
 	esac
@@ -949,7 +951,7 @@ function optimizations {
 
 function software {
 	
- 	RES16=$(reader 15); RES24=$(reader 23); RES25=$(reader 24)
+	RES16=$(reader 15); RES24=$(reader 23); RES25=$(reader 24)
 
 	dialog --title "$RES24" --backtitle "036 Creative Studios" \
 		--yesno "$RES25 \
@@ -1004,7 +1006,7 @@ function finisher {
 	dialog --msgbox "$RES26" 7 50
 	rm -f /deb-setupper.sh &> /dev/null
 	clear
-	umount /mnt/boot/efi &> /dev/null
+	umount /boot/efi &> /dev/null
 	printer print 28;
 	exit
 

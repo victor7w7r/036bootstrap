@@ -17,7 +17,7 @@ function cleanup { rm $LOCALESTEMP; $HOSTTEMP; exit; }
 
 trap cleanup; SIGHUP SIGINT SIGTERM
 
-function core { clear; language; cover; sleep 1s; verify; packages; hostnamer; 
+function core { clear; language; cover; sleep 1s; verify; packages; hostnamer 
 				localer; cockpit; graphical; remote; kvm; ohmyzsh; software; finisher; }
 
 function printer() {
@@ -132,10 +132,8 @@ function language {
 		
 	echo "Bienvenido / Welcome"
 	echo "Please, choose your language / Por favor selecciona tu idioma"
-	echo "1) English"
-	echo "2) Espanol"
+	echo "1) English"; echo "2) Espanol"
 	read -n 1 -r OPTION
-
 	case $OPTION in
 		1) LANGUAGE=1;;
 		2) LANGUAGE=2;;
@@ -259,8 +257,8 @@ function hostnamer {
 
 	clear; RES2=$(reader 1)
 	dialog --title "Hostname" \
-    	--backtitle "036 Creative Studios" \
-    	--inputbox "$RES2" 8 80 2>"$HOSTTEMP"
+		--backtitle "036 Creative Studios" \
+		--inputbox "$RES2" 8 80 2>"$HOSTTEMP"
 
     RESPONSE=$?; DATA=$(<$HOSTTEMP)
 
@@ -513,7 +511,7 @@ function software {
 		dnf install baobab ntfs-3g gparted exfatprogs nautilus gedit tar yum-utils --assumeyes
 		dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm --assumeyes
 		dnf install numix-gtk-theme --assumeyes
-		dnf install gnome-icon-theme --assumeyes
+		dnf install http://mirror.centos.org/centos/7/os/x86_64/Packages/gnome-icon-theme-3.12.0-1.el7.noarch.rpm --assumeyes
 		dnf install numix-icon-theme --assumeyes
 		dnf install numix-icon-theme-circle --assumeyes
 		dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm --assumeyes

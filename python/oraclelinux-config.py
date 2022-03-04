@@ -18,12 +18,12 @@ def main() -> None:
     utils.clear(); language(); cover(); verify(); packages(); hostnamer()
     localer(); cockpit(); graphical(); remote(); kvm(); ohmyzsh(); software(); finisher()
 
-def printer(type: str, position: int, additional: str = "") -> None:
+def printer(type: str, position: int) -> None:
     
-    GREEN = '\033[92m';  WARNING = '\033[93m'; FAIL = '\033[91m';  ENDC = '\033[0m';
-  
+    GREEN = '\033[92m';  WARNING = '\033[93m'; FAIL = '\033[91m';  ENDC = '\033[0m'
+
     DICTIONARY_ENG=(
-	    "Your Operating System is not GNU/Linux, exiting",
+        "Your Operating System is not GNU/Linux, exiting",
 		"This scripts only works in UEFI/EFI systems, consider change your PC or check your BIOS",
 		"This script is only intended to run on Oracle Linux",
 		"This script is only intended to run on x86_64 PCs.",
@@ -42,7 +42,7 @@ def printer(type: str, position: int, additional: str = "") -> None:
 	)
 
     DICTIONARY_ESP=(
-	    "Este sistema no es GNU/Linux, saliendo",
+        "Este sistema no es GNU/Linux, saliendo",
 		"Este script sólo trabaja en UEFI/EFI, considera cambiar tu PC o verifica tu BIOS",
 		"Este script sólo permite ejecutarse en Oracle Linux",
 		"Este script sólo se ejecuta en procesadores de x86_64.",
@@ -59,13 +59,13 @@ def printer(type: str, position: int, additional: str = "") -> None:
         "Tu versión de Python es menor que 3.5, saliendo",
         "Tú no eres superusuario, por favor ejecuta como root"
 	)
- 
+
     if LANGUAGE == 1:
-         if type == "print": print(f"{DICTIONARY_ENG[position]}")
-         elif type == "info": print(f"[{GREEN}+{ENDC}] INFO: {DICTIONARY_ENG[position]}")
-         elif type == "warn": print(f"[{WARNING}*{ENDC}] WARNING: {DICTIONARY_ENG[position]}")
-         elif type == "error": print(f"[{FAIL}!{ENDC}] ERROR: {DICTIONARY_ENG[position]}")
-         else: print(f"[?] UNKNOWN: {DICTIONARY_ENG[position]}")
+            if type == "print": print(f"{DICTIONARY_ENG[position]}")
+            elif type == "info": print(f"[{GREEN}+{ENDC}] INFO: {DICTIONARY_ENG[position]}")
+            elif type == "warn": print(f"[{WARNING}*{ENDC}] WARNING: {DICTIONARY_ENG[position]}")
+            elif type == "error": print(f"[{FAIL}!{ENDC}] ERROR: {DICTIONARY_ENG[position]}")
+            else: print(f"[?] UNKNOWN: {DICTIONARY_ENG[position]}")
     else:
         if type == "print": print(f"{DICTIONARY_ESP[position]}")
         elif type == "info": print(f"[{GREEN}+{ENDC}] INFO: {DICTIONARY_ESP[position]}")
@@ -104,13 +104,12 @@ def reader(position: int) -> str:
 		"Este script tiene un pequeño pack de software, ¿Te gusta?",
 		"LISTO!!!, Tu servidor ha sido configurado exitosamente, si tú tienes errores, repórtalo a 036bootstrap"
 	)
-   
+
     if LANGUAGE == 1: return DICTIONARY_ENG[position]
     else: return DICTIONARY_ESP[position]
 
 def commandverify(cmd: str) -> bool:
-    return call("type " + cmd, shell=True, 
-        stdout=PIPE, stderr=PIPE) == 0
+    return call("type " + cmd, shell=True, stdout=PIPE, stderr=PIPE) == 0
 
 def language() -> None:
     
@@ -118,11 +117,8 @@ def language() -> None:
     
     print("Bienvenido /  Welcome")
     print("Please, choose your language / Por favor selecciona tu idioma")
-    print("1) English")
-    print("2) Espanol")
-    
+    print("1) English"); print("2) Espanol")
     option: str = utils.char()
-  
     if option == "1": LANGUAGE=1
     elif option == "2": LANGUAGE=2
     else: exit(1)
@@ -176,9 +172,8 @@ def cover() -> None:
 
 def verify() -> None:
     
-    ORACLE: str = Popen(r"""#!/bin/bash
-                        cat /etc/os-release | head -n 1 | cut -d "=" -f2
-                      """, shell=True, stdout=PIPE).stdout.read().decode('utf-8').replace("\n", "")
+    ORACLE: str = Popen(r"""cat /etc/os-release | head -n 1 | cut -d "=" -f2
+                        """, shell=True, stdout=PIPE).stdout.read().decode('utf-8').replace("\n", "")
 
     if version_info < (3, 5):
         utils.clear(); printer("error",14); exit(1)
@@ -191,23 +186,18 @@ def verify() -> None:
     if not (search("\"Oracle.* ",ORACLE)):
         utils.clear(); printer("error",2); exit(1)
     if machine() != "x86_64":
-         utils.clear(); printer("error",3); exit(1)
+        utils.clear(); printer("error",3); exit(1)
     if not commandverify("dnf"):
         utils.clear(); printer("error",4); exit(1)
     try: urlopen('http://google.com')
     except: utils.clear(); printer("error",5); exit(1)
     
     printer("print",6)      
-    
-    Popen(r"""#!/bin/bash
-                dnf update --assumeyes &> /dev/null
-            """, shell=True, stdout=PIPE)
+    call("dnf update --assumeyes &> /dev/null", shell=True)
     
     if not commandverify("dialog"):
         printer("print",7)
-        Popen(r"""#!/bin/bash
-                dnf install dialog --assumeyes &> /dev/null
-                """, shell=True, stdout=PIPE)
+        call("dnf install dialog --assumeyes &> /dev/null", shell=True)
         
     printer("print",8)     
     
@@ -220,11 +210,7 @@ def verify() -> None:
 def packages() -> None:
     
     utils.clear(); printer("print",9)
-    proc = Popen("dnf -y install wget zsh", shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    for line in iter(proc.stdout.readline, b''):
-        print(line.rstrip())
-    proc.stdout.close()
-    proc.wait()
+    utils.live_tasker("dnf -y install wget zsh")
     print("=============== OK =============== \n")
     input(reader(0))
     
@@ -232,27 +218,25 @@ def hostnamer() -> None:
     
     response = d.inputbox(reader(1), 8, 80)
     if(response[0] == "ok" ):
-        Popen("hostnamectl set-hostname " + response[1], shell=True)
+        call("hostnamectl set-hostname " + response[1], shell=True)
     elif(response[0] == "cancel" ): exit(0) 
 
 def localer() -> None:
     
     choices = [("Spanish/Español","es"),("English","us")]
-    d.msgbox(reader(2))
-    Popen("timedatectl set-timezone America/Guayaquil", shell=True)
+    d.msgbox(reader(2),9,50)
+    call("timedatectl set-timezone America/Guayaquil", shell=True)
     response = d.menu(reader(0), 15, 50, 4, choices)
     if(response[0] == "ok" and response[1] == "Spanish/Español"):
-        Popen("localectl set-keymap es", shell=True)
+        call("localectl set-keymap es", shell=True)
     elif(response[0] == "ok" and response[1] == "English"):
-        Popen("localectl set-keymap us", shell=True)
+        call("localectl set-keymap us", shell=True)
     else: utils.clear(); exit(0)
     
 def cockpit() -> None:
-    utils.clear(); printer("print",10)
     
-    print(Popen(r"""#!/bin/bash
-                    systemctl enable --now cockpit.socket
-                """, shell=True, stdout=PIPE).stdout.read().decode('utf-8').replace("\n", ""))
+    utils.clear(); printer("print",10)
+    utils.live_tasker("systemctl enable --now cockpit.socket")
     print(" ")
     print("=============== OK =============== \n")
     input(reader(0))
@@ -263,28 +247,23 @@ def graphical() -> None:
     
     LISTHOME: list = Popen("ls /home", shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
     
-    if d.yesno(reader("5"),7,60) == d.OK:
+    if d.yesno(reader(5),7,60) == d.OK:
         XRDPTOGGLE=1; utils.clear()
         print("=============== EPEL & XFCE =============== \n")
         
-        proc = Popen(r"""
-                        #!/bin/bash
-                        dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm --assumeyes
-                        dnf update --assumeyes 
-                        dnf groupinstall "base-x" --assumeyes 
-                        dnf groupinstall "xfce" --assumeyes 
-                        dnf install xfce4-whiskermenu-plugin --assumeyes 
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
-            
-        proc.stdout.close(); proc.wait() 
-        Popen("touch .xinitrc", shell=True); Popen('echo "xfce4-session" > .xinitrc', shell=True)
+        utils.live_tasker("dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm --assumeyes")
+        utils.live_tasker("dnf update --assumeyes")
+        utils.live_tasker('dnf groupinstall "base-x" --assumeyes')
+        utils.live_tasker('dnf groupinstall "xfce" --assumeyes')
+        utils.live_tasker("dnf install xfce4-whiskermenu-plugin --assumeyes")
+        
+        call("touch /root/.xinitrc", shell=True)
+        with open('/root/.xinitrc', 'w') as f: f.write('xfce4-session')
         
         for HOME in LISTHOME:
-            Popen("touch /home/"+HOME+"/.xinitrc", shell=True)
-            Popen('echo "xfce4-session" > /home/'+HOME+'/.xinitrc', shell=True)
-            Popen('chown '+HOME+' /home/'+HOME+'/.xinitrc', shell=True)
+            call(f"touch /home/{HOME}/.xinitrc", shell=True)
+            with open(f'/home/{HOME}/.xinitrc', 'w') as f: f.write('xfce4-session')
+            call(f'chown {HOME} /home/{HOME}/.xinitrc', shell=True)
         
         print(" ")
         print("=============== OK =============== \n")
@@ -292,14 +271,7 @@ def graphical() -> None:
     else:
         utils.clear()
         print("=============== EPEL =============== \n")
-        proc = Popen(r"""
-                       #!/bin/bash
-                        dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm --assumeyes
-                      """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
-            
-        proc.stdout.close(); proc.wait() 
+        utils.live_tasker("dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm --assumeyes")
         print(" ")
         print("=============== OK =============== \n")
         input(reader(0))
@@ -308,15 +280,8 @@ def drivers() -> None:
     utils.clear()
     if d.yesno(reader("6"),8,60) == d.OK :
         utils.clear()
-        proc = Popen(r"""
-                       #!/bin/bash
-                       dnf install open-vm-tools open-vm-tools-desktop --assumeyes
-                      """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
-    
-        proc.stdout.close(); proc.wait() 
-    else: utils.clear(); return
+        utils.live_tasker('dnf install open-vm-tools open-vm-tools-desktop --assumeyes')
+    else: utils.clear()
 
 def remote() -> None:
     
@@ -324,76 +289,56 @@ def remote() -> None:
     LISTHOME: list = Popen("ls /home", shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
     
     utils.clear()
-    if d.yesno(reader("7"),8,60) == d.OK :
+    if d.yesno(reader(7),8,60) == d.OK :
         utils.clear(); printer("print",11)
-        Popen(r"""
-                #!/bin/bash
-                    sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin yes/' /etc/ssh/sshd_config &> /dev/null
-		            systemctl enable sshd; systemctl restart sshd
-                """, shell=True)
+        call(f"sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin yes/' /etc/ssh/sshd_config &> /dev/null", shell=True)
+        utils.live_tasker('systemctl enable sshd')
+        utils.live_tasker('systemctl restart sshd')
         print(" ")
         print("=============== OK =============== \n")
         input(reader(0))
     utils.clear()
     if XRDPTOGGLE == 1:
         print("=============== XRDP ===============  \n")
-        proc = Popen(r"""
-                       #!/bin/bash
-                      dnf install xrdp --assumeyes
-                      """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
+        utils.live_tasker('dnf install xrdp --assumeyes')
     
-        proc.stdout.close(); proc.wait() 
-        
         for HOME in LISTHOME:
-            Popen("touch /home/"+HOME+"/.Xclients", shell=True)
-            Popen('echo "xfce4-session" > /home/'+HOME+'/.Xclients', shell=True)
-            Popen('chmod a+x /home/'+HOME+'/.Xclients', shell=True)
-            Popen('chown '+HOME+' /home/'+HOME+'/.Xclients', shell=True)
+            call(f"touch /home/{HOME}/.Xclients", shell=True)
+            with open(f'/home/{HOME}/.Xclients', 'w') as f: f.write('xfce4-session')
+            call(f'chmod a+x /home/{HOME}/.Xclients', shell=True)
+            call(f'chown {HOME} /home/{HOME}/.Xclients', shell=True)
         
-        Popen(r"""
-                #!/bin/bash
-                   systemctl enable xrdp
-                    systemctl enable xrdp-sesman
-                    systemctl start xrdp
-                    systemctl start xrdp-sesman
-                    firewall-cmd --permanent --add-port=3389/tcp 
-                    firewall-cmd --reload
-                    chcon --type=bin_t /usr/sbin/xrdp
-                    chcon --type=bin_t /usr/sbin/xrdp-sesman
-                """, shell=True)
+        utils.live_tasker('systemctl enable xrdp')
+        utils.live_tasker('systemctl enable xrdp-sesman')
+        utils.live_tasker('firewall-cmd --permanent --add-port=3389/tcp')
+        utils.live_tasker('firewall-cmd --reload')
+        utils.live_tasker('chcon --type=bin_t /usr/sbin/xrdp')
+        utils.live_tasker('chcon --type=bin_t /usr/sbin/xrdp-sesman')
+
         print(" ")
         print("=============== OK =============== \n")
         input(reader(0))
 
 def kvm() -> None:
     utils.clear()
-    if d.yesno(reader("8"),8,60) == d.OK:
+    if d.yesno(reader(8),8,60) == d.OK:
         utils.clear()
         print("=============== KVM ===============  \n" )
-        proc = Popen(r'''
-                       #!/bin/bash
-                       dnf config-manager --enable ol8_appstream ol8_kvm_appstream ol8_developer_EPEL
-                        dnf module install virt --assumeyes 
-                        dnf install virt-install virt-viewer virt-manager edk2-ovmf virt-v2v cockpit-machines --assumeyes
-                        virt-host-validate qemu
-                        systemctl enable libvirtd
-                        systemctl start libvirtd
-                        dnf install dnf-plugins-core --assumeyes 
-                        dnf config-manager --add-repo https://www.kraxel.org/repos/firmware.repo
-                        dnf install edk2.git-ovmf-x64 --assumeyes 
-                        echo "nvram = [" >> /etc/libvirt/qemu.conf
-                        echo "	\"/usr/edk.git/OVMF_CODE.fd:/usr/edk.git/OVMF_VARS.fd\"" >> /etc/libvirt/qemu.conf
-                        echo "]" >> /etc/libvirt/qemu.conf
-                        systemctl restart libvirtd
-                        systemctl enable serial-getty@ttyS0.service
-                        systemctl start serial-getty@ttyS0.service
-                      ''', shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
-    
-        proc.stdout.close(); proc.wait() 
+        utils.live_tasker('dnf config-manager --enable ol8_appstream ol8_kvm_appstream ol8_developer_EPEL')
+        utils.live_tasker('dnf module install virt --assumeyes')
+        utils.live_tasker('dnf install virt-install virt-viewer virt-manager edk2-ovmf virt-v2v cockpit-machines --assumeyes')
+        utils.live_tasker('virt-host-validate qemu')
+        utils.live_tasker('systemctl enable libvirtd')
+        utils.live_tasker('systemctl start libvirtd')
+        utils.live_tasker('dnf config-manager --add-repo https://www.kraxel.org/repos/firmware.repo')
+        utils.live_tasker('dnf install edk2.git-ovmf-x64 --assumeyes')
+        with open('/etc/libvirt/qemu.conf', 'a') as f: 
+            f.writelines(["nvram = [\n",
+                        '   "/usr/edk.git/OVMF_CODE.fd:/usr/edk.git/OVMF_VARS.fd"\n',
+                        "]"])
+        utils.live_tasker('systemctl restart libvirtd')
+        utils.live_tasker('systemctl enable serial-getty@ttyS0.service')
+        utils.live_tasker('systemctl start serial-getty@ttyS0.service')
     else: utils.clear(); return
         
 def ohmyzsh() -> None:
@@ -401,25 +346,35 @@ def ohmyzsh() -> None:
     LISTHOME: list = Popen("ls /home", shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
     print("=============== OMZ =============== \n" )
     for HOME in LISTHOME:
-        Popen("echo '#!/bin/bash' > /home/"+HOME+"/omz.sh", shell=True)
-        Popen(r'echo \'sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"\' >> /home/'+HOME+'/omz.sh', shell=True)
-        Popen(r'echo \'sed -i -e "s/ZSH_THEME=.*/ZSH_THEME=\"pmcgee\"/" .zshrc\' >> /home/'+HOME+'/omz.sh', shell=True)
-        Popen(r'echo \'sed -i -e "/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true" .zshrc\' >> /home/'+HOME+'/omz.sh', shell=True)
-        Popen(r'echo \'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting\' >> /home/'+HOME+'/omz.sh', shell=True)
-        Popen(r'echo \'git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions\' >> /home/'+HOME+'/omz.sh', shell=True)
-        Popen(r'echo \'sed -i -e "s/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/" .zshrc\' >> /home/'+HOME+'/omz.sh', shell=True)
-        Popen('chown '+HOME+' /home/'+HOME+'/omz.sh', shell=True)
-        Popen('chmod +x /home/'+HOME+'/omz.sh', shell=True)
+        with open(f'/home/{HOME}/omz.sh', 'w') as f: 
+            f.writelines([
+                "#!/bin/bash\n",
+                'sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"\n',
+                'sed -i -e \'s/ZSH_THEME=.*/ZSH_THEME=\\\"pmcgee\\\"/\' .zshrc\n',
+                "sed -i -e '/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true' .zshrc\n",
+                r"git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting",
+                "\n",
+                r"git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions",
+                "\n",
+                "sed -i -e 's/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/' .zshrc"
+                ])
+        call(f'chown {HOME} /home/{HOME}/omz.sh', shell=True)
+        call(f'chmod +x /home/{HOME}/omz.sh', shell=True)
         
-    Popen("echo '#!/bin/bash' > /root/omz.sh", shell=True)
-    Popen(r'echo \'sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"\' >> /root/omz.sh', shell=True)
-    Popen(r'echo \'sed -i -e "s/ZSH_THEME=.*/ZSH_THEME=\"pmcgee\"/" .zshrc\' >> /root/omz.sh', shell=True)
-    Popen(r'echo \'sed -i -e "/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true" .zshrc\' >> /root/omz.sh', shell=True)
-    Popen(r'echo \'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting\' >> /root/omz.sh', shell=True)
-    Popen(r'echo \'git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions\' >> /root/omz.sh', shell=True)
-    Popen(r'echo \'sed -i -e "s/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/" .zshrc\' >> /root/omz.sh', shell=True)
-    Popen('chown '+HOME+' /root/omz.sh', shell=True)
-    Popen('chmod +x /root/omz.sh', shell=True)
+    with open('/root/omz.sh', 'w') as f: 
+        f.writelines([
+            "#!/bin/bash\n",
+            'sh -c "$(wget https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"\n',
+            'sed -i -e \'s/ZSH_THEME=.*/ZSH_THEME=\\\"pmcgee\\\"/\' .zshrc\n',
+            "sed -i -e '/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true' .zshrc\n",
+            r"git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting",
+            "\n",
+            r"git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions",
+            "\n",
+            "sed -i -e 's/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/' .zshrc"
+        ])
+        
+    call(f'chmod +x /root/omz.sh', shell=True)
     
     printer("print",12)
 
@@ -429,29 +384,19 @@ def ohmyzsh() -> None:
     
 def software() -> None:
     utils.clear()
-  
-    if d.yesno(reader("10")+"""\n -> baobab \n -> ntfs-3g \n 
-			-> gparted \n -> nautilus \n -> gedit \n 
-			-> tar \n -> yum-utils \n -> numix-gtk-theme \n 
-			-> numix-icon-theme \n -> numix-icon-theme-circle""" ,20,65) == d.OK:
+
+    if d.yesno(reader(10)+"""\n -> baobab \n -> ntfs-3g \n -> gparted \n -> nautilus \n -> gedit \n -> tar \n -> yum-utils \n -> numix-gtk-theme \n -> numix-icon-theme \n -> numix-icon-theme-circle
+            """ ,20,65) == d.OK:
         utils.clear()
         print("=============== SOFTWARE =============== \n")
-
-        proc = Popen(r'''
-                       #!/bin/bash
-                        dnf install baobab ntfs-3g gparted exfatprogs nautilus gedit tar yum-utils --assumeyes
-                        dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm --assumeyes
-                        dnf install numix-gtk-theme --assumeyes
-                        dnf install gnome-icon-theme --assumeyes
-                        dnf install numix-icon-theme --assumeyes
-                        dnf install numix-icon-theme-circle --assumeyes
-                        dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm --assumeyes
-                      ''', shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
-    
-        proc.stdout.close(); proc.wait() 
         
+        utils.live_tasker('dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm --assumeyes')
+        utils.live_tasker('dnf install numix-gtk-theme --assumeyes')
+        utils.live_tasker('dnf install http://mirror.centos.org/centos/7/os/x86_64/Packages/gnome-icon-theme-3.12.0-1.el7.noarch.rpm --assumeyes')
+        utils.live_tasker('dnf install numix-icon-theme --assumeyes')
+        utils.live_tasker('dnf install numix-icon-theme-circle --assumeyes')
+        utils.live_tasker('dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm --assumeyes')
+
         print(" ")
         print("=============== OK =============== \n")
         input(reader(0))
@@ -460,7 +405,7 @@ def software() -> None:
 
 def finisher() -> None:
     
-    utils.clear(); d.msgbox(reader(11))
+    utils.clear(); d.msgbox(reader(11),7,50)
     utils.clear(); printer("print", 13); exit(0)
         
 class utils:
@@ -476,6 +421,16 @@ class utils:
         finally:
             tcsetattr(fd, TCSADRAIN, oldSettings)
         return answer
+    
+    def live_tasker(cmd: str) -> int:
+        task = Popen(cmd, stdout=PIPE, stderr=PIPE, encoding='utf8', shell=True)
+        try:  
+            while task.poll() is None:
+                for line in task.stdout:
+                    task.stdout.flush()
+                    print(line.replace("\n", ""))
+            return task.poll()
+        except: return 1
     
     def spinning():
         while True:

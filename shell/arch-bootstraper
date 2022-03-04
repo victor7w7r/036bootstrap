@@ -41,7 +41,7 @@ function printer() {
 
     local RED="\e[31m"; local GREEN="\e[32m"; local YELLOW="\e[33m"
     local RESET="\e[0m"; local MESSAGE_TYPE=""; local MESSAGE=""
-    MESSAGE_TYPE="${1}"; POSITION="${2}"; ADDITIONAL="${3}";
+    MESSAGE_TYPE="${1}"; POSITION="${2}"; ADDITIONAL="${3}"
 
 	local DICTIONARY_ENG=(
 		"Your Operating System is not GNU/Linux, exiting"
@@ -71,14 +71,14 @@ function printer() {
 		"Something failed inside the chroot, not unmounting filesystems so you can investigate."
 		"Please umount all partitions, and restart this script"
 		"=============== ROOT PASSWORD FOR YOUR SYSTEM =============== \n" 
-		 "=============== CONFIGURE GRUB =============== \n" 
-		 "=============== START NETWORKMANAGER AND SSH SERVICES =============== \n" 
-		 "=============== ADD A USER TO A SUDO GROUP =============== \n" 
-		 "=============== AUR (YAY ASKS YOU YOUR PASSWORD, PAY ATTENTION) ===============  \n" 
-		 "We create a script called omz.sh in your home directory, after reboot, use chmod +x at omz.sh"
-		 "=============== OPTIMIZATIONS =============== \n" 
-		 "We create a script called software.sh in your home directory, after reboot, use chmod +x at software.sh"
-		 "Please reboot and remove your live media"
+		"=============== CONFIGURE GRUB =============== \n" 
+		"=============== START NETWORKMANAGER AND SSH SERVICES =============== \n" 
+		"=============== ADD A USER TO A SUDO GROUP =============== \n" 
+		"=============== AUR (YAY ASKS YOU YOUR PASSWORD, PAY ATTENTION) ===============  \n" 
+		"We create a script called omz.sh in your home directory, after reboot, use chmod +x at omz.sh"
+		"=============== OPTIMIZATIONS =============== \n" 
+		"We create a script called software.sh in your home directory, after reboot, use chmod +x at software.sh"
+		"Please reboot and remove your live media"
 	)
 
 	local DICTIONARY_ESP=(
@@ -104,7 +104,7 @@ function printer() {
 		"=============== FORMATEAR PARTICIONES DE RAIZ E INTERCAMBIO =============== \n" 
 		"=============== FORMATEAR PARTICION DE RAIZ =============== \n" 
 		"=============== FORMATEAR EFI Y MONTARLO =============== \n" 
-		 "Particiones desmontadas de manera exitosa"
+		"Particiones desmontadas de manera exitosa"
 		"=============== PACSTRAP: INSTALAR LA BASE DE LINUX Y PAQUETES CORE  =============== \n" 
 		"Algo falló en el chroot, no se desmontarán los sistemas de archivos, así que puedes investigar."
 		"Por favor desmonta tus particiones y reinicia este script"
@@ -223,8 +223,7 @@ function language {
 		
 	echo "Bienvenido / Welcome"
 	echo "Please, choose your language / Por favor selecciona tu idioma"
-	echo "1) English"
-	echo "2) Espanol"
+	echo "1) English"; echo "2) Espanol"
 	read -n 1 -r OPTION
 
 	case $OPTION in
@@ -312,7 +311,7 @@ function verify {
 		clear; printer error 4; exit
 	fi
 
-   	printer print 5; pacman -Sy &> /dev/null
+	printer print 5; pacman -Sy &> /dev/null
 
     SELECTOR="lsb_release"; commandverify "$SELECTOR"; local res=$?
 
@@ -334,7 +333,7 @@ function verify {
 		pacman -S f2fs-tools --noconfirm &> /dev/null
 	fi
 
-	SELECTOR="dialog"; whichverify "$SELECTOR"; local res=$?
+	SELECTOR="dialog"; commandverify "$SELECTOR"; local res=$?
 
 	if [ $res -eq 1 ]; then
 		printer print 9
@@ -390,7 +389,7 @@ function disclaimer {
 		2.	/dev/sdX2	archlinux	>20GB		ext4		primary\n\
 		3.	/dev/sdx3	linux-swap	2GB-4GB		swap		primary\n\n\
 
-		$RES7 \
+		\n$RES7 \
 
 		mklabel gpt \ \n \
 		mkpart EFI fat32 1MiB 200MiB \ \n \
@@ -404,7 +403,7 @@ function disclaimer {
 		1.	/dev/sdX1	EFI			200MB		fat32		esp\n\
 		2.	/dev/sdX2	archlinux	>20GB		f2fs/ext4		primary\n\
 
-		$RES7 \
+		\n$RES7 \
 
 		mklabel gpt \ \n \
 		mkpart EFI fat32 1MiB 200MiB \ \n \
@@ -508,7 +507,7 @@ function rootpartmenu {
 	clear; RES10=$(reader 9); RES11=$(reader 10)
 	local VERIFY=""; local TYPE=""
 	local COUNT=0; local COUNTMOUNT=0
-	local ISMOUNTED=0; local ROOTPARTS=()
+	local ISMOUNTED=""; local ROOTPARTS=()
 
 	EFIPART=$(fdisk -l "$DISK" | sed -ne /EFI/p | cut -d " " -f1)
 
@@ -585,7 +584,7 @@ function swapmenu() {
 
 }
 
-function diskformat {
+function diskformat() {
 
 	if [ "$1" == "" ]; then clear; exit 0; fi
 	clear; RES14=$(reader 13); RES15=$(reader 14)
@@ -680,7 +679,7 @@ function configurator {
 	clear; printer print 28 
 	systemctl enable NetworkManager
 	systemctl enable sshd
-	sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin Yes/' \
+	sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin yes/' \
 	/etc/ssh/sshd_config &> /dev/null
 
 	echo " "
@@ -800,7 +799,7 @@ function xanmod {
 		/etc/pacman.conf &> /dev/null
 	echo "[kernel]" >> /etc/pacman.conf
 	echo 'Server = https://repo.archlinuxrepo.dev/$arch/$repo' >> /etc/pacman.conf
-	pacman -Syyu xanmod-kernel xanmod-kernel-headers --noconfirm
+	pacman -Syyu linux-xanmod linux-xanmod-headers --noconfirm
 	pacman -R linux --noconfirm
 
 	echo " "
@@ -838,7 +837,6 @@ function graphical {
 			echo -e "=============== OK =============== \n" 
 			read -r -p "$RES16"
 			return;;
-
 		GNOME) 
 			clear
 			echo -e "=============== GNOME =============== \n" 
@@ -1008,7 +1006,6 @@ function software {
 		--yesno "$RES27 \
 			-> baobab \n \
 			-> ntfs-3g \n \
-			-> exfatprogs \n \
 			-> exfat-utils \n \
 			-> xarchiver \n \
 			-> gparted \n \
@@ -1061,7 +1058,7 @@ function finisher {
 	clear; RES28=$(reader 27)
 	dialog --msgbox "$RES28" 7 50
 	rm -f /arch-setupper.sh &> /dev/null
-	exit 0; clear; printer print 34
+	clear; printer print 34; exit 0
 }
 
 if [ "$1" == "chroot" ]; then
