@@ -22,11 +22,17 @@ def main() -> None:
     global DISKENVIRONMENT
     global LANGUAGE
     
-    if argv[0] == 'chroot':
-        DISKENVIRONMENT = argv[1]
-        LANGUAGE = argv[2]
-        corechroot()
-    else: corelive()
+    try: argv[1].rstrip()
+    except: corelive()
+    else:
+        if argv[1] == 'chroot':
+            DISKENVIRONMENT = argv[2]
+            LANGUAGE = argv[3]
+            corechroot(); return
+        elif argv[1] == 'test':
+            DISKENVIRONMENT = "HDD"
+            LANGUAGE = 1
+            toggler(); return
     
 def corelive() -> None: 
     utils.clear(); language(); cover(); verify(); diskenv(); disclaimer(); diskmenu()
@@ -163,7 +169,7 @@ def reader(position: int) -> str:
 		"If you are executing Arch Linux as a guest",
 		"More Sofware!!",
 		"This script has a little pack of software, Do you like it?\n",
-		"READY!!!, Your PC is succesfully installed with Arch Linux, if you have errors, please report at 036bootstrap in GitHub"
+		"READY!!!, Your PC is succesfully installed with Arch Linux, if you have errors, please report at 036bootstrap in GitHub",
         "Choose your procesor"
 	)
 
@@ -195,10 +201,10 @@ def reader(position: int) -> str:
 		"Si ejecutas como invitado",
 		"Más Sofware!!",
 		"Este script tiene un pequeño pack de software, ¿Te gusta?\n",
-		"LISTO!!!, Tu PC ya instalo de manera correcta a Arch Linux, si hubo errores, repórtalo en 036bootstrap / GitHub"
+		"LISTO!!!, Tu PC ya instalo de manera correcta a Arch Linux, si hubo errores, repórtalo en 036bootstrap / GitHub",
         "Elige tu procesador"
 	)
-   
+
     if LANGUAGE == 1: return DICTIONARY_ENG[position]
     else: return DICTIONARY_ESP[position]
 
@@ -282,11 +288,11 @@ def verify() -> None:
     try: urlopen('http://google.com')
     except: utils.clear(); printer("error",4); exit(1)
 
-    printer("print",5); call("pacman -Sy &> /dev/null", shell=True)
+    printer("print",5); system("pacman -Sy &> /dev/null")
     
     if not commandverify("lsb_release"):
         printer("print",6)
-        call("pacman -S lsb-release --noconfirm &> /dev/null", shell=True)
+        system("pacman -S lsb-release --noconfirm &> /dev/null")
         
     LSB: str = Popen("lsb_release -is", 
                     shell=True, stdout=PIPE).stdout.read().decode('utf-8').replace("\n", "")
@@ -296,17 +302,17 @@ def verify() -> None:
     
     if not commandverify("fsck.f2fs"):
         printer("print",8)
-        call("pacman -S f2fs-tools --noconfirm &> /dev/null", shell=True)
+        system("pacman -S f2fs-tools --noconfirm &> /dev/null")
     
     if not commandverify("dialog"):
         printer("print",9)
-        call("pacman -S dialog --noconfirm &> /dev/null", shell=True)
+        system("pacman -S dialog --noconfirm &> /dev/null")
         
     if not commandverify("pacstrap"):
         printer("print",10)
-        call("pacman -S arch-install-scripts --noconfirm &> /dev/null", shell=True)
+        system("pacman -S arch-install-scripts --noconfirm &> /dev/null")
         
-    call("pacman -S ncurses --noconfirm &> /dev/null", shell=True)
+    system("pacman -S ncurses --noconfirm &> /dev/null")
     printer("print",11)
     
     spinner = utils.spinning()
@@ -554,9 +560,9 @@ def diskformat(temp: str) -> None:
         if d.yesno(reader(14)+f"\n{EFIPART} (EFI) \n{ROOTPART} (ROOT) \n{SWAPPART} (SWAP)",8,60) == d.OK:
             utils.clear()
             printer("print",19)
-            utils.live_tasker(f"mkfs.ext4 {ROOTPART}")
-            utils.live_tasker(f"mkswap {SWAPPART}")
-            call(f"swapon {SWAPPART}", shell=True)
+            system(f"mkfs.ext4 {ROOTPART}")
+            system(f"mkswap {SWAPPART}")
+            system(f"swapon {SWAPPART}")
             print(" ")
             print("=============== OK =============== \n")
             input(reader(15))
@@ -565,51 +571,59 @@ def diskformat(temp: str) -> None:
         if d.yesno(reader(14)+"\n"+EFIPART+" (EFI) \n "+ROOTPART+" (ROOT)",7,60) == d.OK:
             utils.clear();
             printer("print",20)
-            utils.live_tasker(f"mkfs.f2fs {ROOTPART}")
+            system(f"mkfs.f2fs {ROOTPART}")
             print(" ")
             print("=============== OK =============== \n")
             input(reader(15))
         else: utils.clear(); exit(0)
     utils.clear()
     printer("print",21); 
-    utils.live_tasker(f"mkfs.fat -F32 {EFIPART}")
-    call(f"mount {ROOTPART} /mnt; mkdir /mnt/boot; mkdir /mnt/boot/efi", shell=True)
-    call(f"mount {EFIPART} /mnt/boot/efi", shell=True)
+    system(f"mkfs.fat -F32 {EFIPART}")
+    system(f"mount {ROOTPART} /mnt; mkdir /mnt/boot; mkdir /mnt/boot/efi")
+    system(f"mount {EFIPART} /mnt/boot/efi")
     
     print(" ")
     print("=============== OK =============== \n")
     input(reader(15)); pacstraper()
     
-def unmounter() -> None:
-    utils.clear()
-    if DISKENVIRONMENT == "HDD":
-        call(f"umount {ROOTPART} /mnt; swapoff {SWAPPART}", shell=True)
-    elif DISKENVIRONMENT == "SSD":
-        call(f"umount {ROOTPART}", shell=True)
-    printer("print",22); exit(0)
-
 def pacstraper() -> None:
-    utils.clear(); printer("print",23)
-    utils.live_tasker("""
-                        pacstrap /mnt base linux linux-firmware nano sudo vi vim git wget \
-                        grub efibootmgr reflector os-prober rsync networkmanager neofetch \
-                        openssh arch-install-scripts screen unrar p7zip zsh dialog python python-pip""")
     
-    call("genfstab -U /mnt >> /mnt/etc/fstab", shell=True)
+    utils.clear(); printer("print",23)
+    system("""
+            pacstrap /mnt base linux linux-firmware nano sudo vi vim git wget \
+            grub efibootmgr reflector os-prober rsync networkmanager neofetch f2fs-tools\
+            openssh arch-install-scripts screen unrar p7zip zsh dialog python python-pip""")
+    
+    system("genfstab -U /mnt >> /mnt/etc/fstab")
     
     print(" ")
     print("=============== OK =============== \n")
     input(reader(15)); toggler()
     
 def toggler() -> None:
-    call(f"cp {__file__} /mnt/arch-setupper.py", shell=True) 
-    call(f"arch-chroot /mnt pip install pythondialog && python3 ./arch-setupper.py chroot {DISKENVIRONMENT} {LANGUAGE}",
-            shell=True)
     
+    utils.clear()
+    system(f"cp {__file__} /mnt/setup.py") 
+    
+    print("=============== PYTHON DIALOG / CHROOT =============== \n")
+    
+    system(f"arch-chroot /mnt pip install pythondialog")
+    system(f"arch-chroot /mnt python /setup.py chroot {DISKENVIRONMENT} {LANGUAGE}")
+    
+    if path.isfile('/mnt/setup.py'):
+        printer("error",24); printer("print",25); exit(1)
+        
+    if DISKENVIRONMENT == "HDD":
+        system(f"umount {ROOTPART}; swapoff {SWAPPART}")
+    elif DISKENVIRONMENT == "SSD":
+        system(f"umount {ROOTPART}")
+    printer("print",22); exit(0)
+    
+
 def configurator() -> None:
     
     utils.clear(); printer("print",26)
-    call("passwd",shell=True)
+    system("passwd")
     print(" ")
     print("=============== OK =============== \n")
     input(reader(15))
@@ -620,32 +634,32 @@ def configurator() -> None:
     if response[0] == "ok" and response[1] == "Intel":
         utils.clear()
         print("=============== INTEL MICROCODE  =============== \n")
-        call("pacman -S intel-ucode --noconfirm", shell=True)
+        system("pacman -S intel-ucode --noconfirm")
         print(" ")
         print("=============== OK =============== \n")
         input(reader(15))
     elif response[0] == "ok" and response[1] == "AMD":
         utils.clear()
         print("=============== AMD MICROCODE  =============== \n")
-        call("pacman -S amd-ucode --noconfirm", shell=True)
+        system("pacman -S amd-ucode --noconfirm")
         print(" ")
         print("=============== OK =============== \n")
         input(reader(15))
     else: utils.clear(); exit(0)
 
     utils.clear(); printer("print",27)
-    utils.live_tasker("grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=arch")
-    utils.live_tasker("grub-mkconfig -o /boot/grub/grub.cfg")
-    utils.live_tasker("umount /boot/efi")
+    system("grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=arch")
+    system("grub-mkconfig -o /boot/grub/grub.cfg")
+    system("umount /boot/efi")
         
     print(" ")
     print("=============== OK =============== \n")
     input(reader(15))
     utils.clear(); printer("print",28)
-    
-    utils.live_tasker("systemctl enable NetworkManager")
-    utils.live_tasker("systemctl enable sshd")
-    utils.live_tasker(r"sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin Yes/' /etc/ssh/sshd_config &> /dev/null")
+        
+    system("systemctl enable NetworkManager")
+    system("systemctl enable sshd")
+    system(r"sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin Yes/' /etc/ssh/sshd_config &> /dev/null")
     
     print(" ")
     print("=============== OK =============== \n")
@@ -661,14 +675,15 @@ def hostnamer() -> None:
     
 def localer() -> None:
     utils.clear(); d.msgbox(reader(17))
-    call("ln -sf /usr/share/zoneinfo/America/Guayaquil /etc/localtime", shell=True)
-    call(" hwclock --systohc",shell=True)
+    system("ln -sf /usr/share/zoneinfo/America/Guayaquil /etc/localtime")
+    system("hwclock --systohc")
 
     choices = [("Spanish/Español","es_ES"),("English","en_US")]
     response = d.menu(reader(18), 12, 50, 4, choices)
     if response[0] == "ok" and response[1] == "Spanish/Español":
-        call("sed -i 's/^#es_ES.UTF-8 UTF-8/es_ES.UTF-8 UTF-8/' /etc/locale.gen &> /dev/null", shell=True)
-        utils.live_tasker("locale-gen")
+        utils.clear()
+        system("sed -i 's/^#es_ES.UTF-8 UTF-8/es_ES.UTF-8 UTF-8/' /etc/locale.gen &> /dev/null")
+        system("locale-gen")
         with open('/etc/locale.conf', 'w') as f: 
             f.writelines([
                 'LANG="es_ES.UTF-8"\n',
@@ -676,8 +691,9 @@ def localer() -> None:
                 'LANGUAGE="es_EC:es_ES:es"\n'
                 ])
     elif response[0] == "ok" and response[1] == "English":
-        call("sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &> /dev/null", shell=True)
-        utils.live_tasker("locale-gen")
+        utils.clear()
+        system("sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &> /dev/null")
+        system("locale-gen")
         with open('/etc/locale.conf', 'w') as f: 
             f.writelines([
                 'LANG="en_US.UTF-8"\n',
@@ -691,12 +707,12 @@ def newuser() -> None:
     
     global SUDOUSER
     
-    utils.clear(); print("print",29)
+    utils.clear(); printer("print",29)
     SUDOUSER = input(reader(19))
-    utils.live_tasker(f"useradd --create-home {SUDOUSER}",shell=True)
-    utils.live_tasker(f"passwd {SUDOUSER}",shell=True)
-    utils.live_tasker(f"usermod -aG wheel,storage,power {SUDOUSER}",shell=True)
-    call("sed -i 's/^#.*%wheel ALL=(ALL) ALL$/%wheel ALL=(ALL) ALL/' /etc/sudoers &> /dev/null", shell=True)
+    system(f"useradd --create-home {SUDOUSER}")
+    system(f"passwd {SUDOUSER}")
+    system(f"usermod -aG wheel,storage,power {SUDOUSER}")
+    system("sed -i 's/^#.*%wheel ALL=(ALL) ALL$/%wheel ALL=(ALL) ALL/' /etc/sudoers &> /dev/null")
     
     print(" ")
     print("=============== OK =============== \n")
@@ -706,15 +722,15 @@ def liquorix() -> None:
     
     utils.clear()
     print( "=============== LIQUORIX KERNEL =============== \n" )
-    call("sed -i \"/\[multilib\]/,/Include/\"'s/^#//' /etc/pacman.conf", shell=True)
-    call("sed -i 's/^SigLevel    = Required DatabaseOptional$/SigLevel = PackageOptional/' /etc/pacman.conf &> /dev/null", shell=True)
+    system("sed -i \"/\[multilib\]/,/Include/\"'s/^#//' /etc/pacman.conf")
+    system("sed -i 's/^SigLevel    = Required DatabaseOptional$/SigLevel = PackageOptional/' /etc/pacman.conf &> /dev/null")
     with open('/etc/pacman.conf', 'a') as f: 
         f.writelines([
             '[kernel]\n',
             'Server = https://repo.archlinuxrepo.dev/$arch/$repo'
         ])
-    utils.live_tasker("pacman -Syyu linux-lqx linux-lqx-headers --noconfirm", shell=True)
-    utils.live_tasker("grub-mkconfig -o /boot/grub/grub.cfg")
+    system("pacman -Syyu linux-lqx linux-lqx-headers --noconfirm")
+    system("grub-mkconfig -o /boot/grub/grub.cfg")
     print(" ")
     print("=============== OK =============== \n")
     input(reader(15))
@@ -736,12 +752,12 @@ def graphical() -> None:
         utils.clear()
         print("=============== XFCE =============== \n")
             
-        utils.live_tasker("pacman -S xorg --noconfirm")
-        utils.live_tasker("pacman -S xfce4 xfce4-goodies xfce4-terminal ttf-ubuntu-font-family --noconfirm")
-        utils.live_tasker("pacman -S gtk-engines gtk-engine-murrine gnome-themes-standard --noconfirm")
-        utils.live_tasker("pacman -S xdg-user-dirs ttf-dejavu gvfs xfce4-notifyd network-manager-applet --noconfirm")
-        utils.live_tasker("pacman -S volumeicon firefox gdm grub-customizer nemo cinnamon-translations --noconfirm")
-        utils.live_tasker("systemctl enable gdm")
+        system("pacman -S xorg --noconfirm")
+        system("pacman -S xfce4 xfce4-goodies xfce4-terminal ttf-ubuntu-font-family --noconfirm")
+        system("pacman -S gtk-engines gtk-engine-murrine gnome-themes-standard --noconfirm")
+        system("pacman -S xdg-user-dirs ttf-dejavu gvfs xfce4-notifyd network-manager-applet --noconfirm")
+        system("pacman -S volumeicon firefox gdm grub-customizer nemo cinnamon-translations --noconfirm")
+        system("systemctl enable gdm")
         
         print(" ")
         print("=============== OK =============== \n")
@@ -751,10 +767,10 @@ def graphical() -> None:
         utils.clear()
         print("=============== GNOME =============== \n")
         
-        utils.live_tasker("pacman -S xorg --noconfirm")
-        utils.live_tasker("pacman -S gnome gdm gnome-themes-standard network-manager-applet --noconfirm")
-        utils.live_tasker("pacman -S firefox grub-customizer nemo cinnamon-translations --noconfirm")
-        utils.live_tasker("systemctl enable gdm")
+        system("pacman -S xorg --noconfirm")
+        system("pacman -S gnome gdm gnome-themes-standard network-manager-applet --noconfirm")
+        system("pacman -S firefox grub-customizer nemo cinnamon-translations --noconfirm")
+        system("systemctl enable gdm")
 
         print(" ")
         print("=============== OK =============== \n")
@@ -763,10 +779,10 @@ def graphical() -> None:
         utils.clear()
         print("=============== KDE =============== \n")
             
-        utils.live_tasker("pacman -S xorg --noconfirm")
-        utils.live_tasker("pacman -S plasma plasma-wayland-session kde-applications gnome-themes-standard --noconfirm")
-        utils.live_tasker("pacman -S network-manager-applet firefox grub-customizer nemo cinnamon-translations --noconfirm")
-        utils.live_tasker("systemctl enable sddm.service")
+        system("pacman -S xorg --noconfirm")
+        system("pacman -S plasma plasma-wayland-session kde-applications gnome-themes-standard --noconfirm")
+        system("pacman -S network-manager-applet firefox grub-customizer nemo cinnamon-translations --noconfirm")
+        system("systemctl enable sddm.service")
         
         print(" ")
         print("=============== OK =============== \n")
@@ -775,7 +791,7 @@ def graphical() -> None:
         utils.clear()
         print("=============== XORG ONLY =============== \n")
         
-        utils.live_tasker("pacman -S xorg --noconfirm")
+        system("pacman -S xorg --noconfirm")
         
         print(" ")
         print("=============== OK =============== \n")
@@ -785,8 +801,8 @@ def graphical() -> None:
         utils.clear()
         print("=============== CUTEFISH =============== \n")
         
-        utils.live_tasker("pacman -S xorg --noconfirm")
-        utils.live_tasker("pacman -S cutefish --noconfirm")
+        system("pacman -S xorg --noconfirm")
+        system("pacman -S cutefish --noconfirm")
         
         print(" ")
         print("=============== OK =============== \n")
@@ -809,7 +825,7 @@ def drivers() -> None:
         utils.clear()
         print("=============== INTEL =============== \n")
 
-        utils.live_tasker("pacman -S xf86-video-intel intem-media-driver intel-media-sdk lib32-mesa --noconfirm")
+        system("pacman -S xf86-video-intel intem-media-driver intel-media-sdk lib32-mesa --noconfirm")
 
         print(" ")
         print("=============== OK =============== \n")
@@ -818,7 +834,7 @@ def drivers() -> None:
         utils.clear()
         print("=============== ATI =============== \n")
 
-        utils.live_tasker("pacman -S xf86-video-ati --noconfirm")
+        system("pacman -S xf86-video-ati --noconfirm")
         
         print(" ")
         print("=============== OK =============== \n")
@@ -827,7 +843,7 @@ def drivers() -> None:
         utils.clear()
         print("=============== AMD =============== \n")
 
-        utils.live_tasker("pacman -S xf86-video-amdgpu --noconfirm")
+        system("pacman -S xf86-video-amdgpu --noconfirm")
         
         print(" ")
         print("=============== OK =============== \n")
@@ -836,7 +852,7 @@ def drivers() -> None:
         utils.clear()
         print("=============== NVIDIA =============== \n")
             
-        utils.live_tasker("pacman -S nvidia nvidia-utils --noconfirm")
+        system("pacman -S nvidia nvidia-utils --noconfirm")
         
         print(" ")
         print("=============== OK =============== \n")
@@ -845,8 +861,8 @@ def drivers() -> None:
         utils.clear()
         print("=============== VMware =============== \n")
 
-        utils.live_tasker("pacman -S gtkmm3 open-vm-tools xf86-input-vmmouse xf86-video-vmware --noconfirm")
-        utils.live_tasker("systemctl enable vmtoolsd")
+        system("pacman -S gtkmm3 open-vm-tools xf86-input-vmmouse xf86-video-vmware --noconfirm")
+        system("systemctl enable vmtoolsd")
         
         print(" ")
         print("=============== OK =============== \n")
@@ -855,11 +871,11 @@ def drivers() -> None:
 def aur() -> None:
     utils.clear(); printer("print",30)
 
-    utils.live_tasker("pacman -S --needed base-devel fakeroot packer go --noconfirm")
+    system("pacman -S --needed base-devel fakeroot packer go --noconfirm")
     
-    call(f"sudo -u {SUDOUSER} bash -c 'cd; git clone https://aur.archlinux.org/yay-bin.git'",shell=True)    
-    call(f"sudo -u {SUDOUSER} bash -c 'cd; cd yay-bin; makepkg -si'",shell=True) 
-    call(f"sudo -u {SUDOUSER} bash -c 'cd; rm -rf yay-bin'",shell=True) 
+    system(f"sudo -u {SUDOUSER} bash -c 'cd; git clone https://aur.archlinux.org/yay-bin.git'")    
+    system(f"sudo -u {SUDOUSER} bash -c 'cd; cd yay-bin; makepkg -si'") 
+    system(f"sudo -u {SUDOUSER} bash -c 'cd; rm -rf yay-bin'") 
     
     print(" ")
     print("=============== OK =============== \n")
@@ -874,8 +890,8 @@ def swapper() -> None:
         with open('/etc/sysctl.d/99-sysctl.conf', 'a') as f: 
             f.write("vm.swappiness=60")
     if DISKENVIRONMENT == "SSD":
-        call(f"sudo -u {SUDOUSER} bash -c 'yay -S zramswap'", shell=True)
-        utils.live_tasker("systemctl enable zramswap.service")
+        system(f"sudo -u {SUDOUSER} bash -c 'yay -S zramswap'")
+        system("systemctl enable zramswap.service")
     
     print(" ")
     print("=============== OK =============== \n")
@@ -885,7 +901,7 @@ def ohmyzsh() -> None:
     
     utils.clear()
     print("=============== OMZ =============== \n")
-    call(f"touch /home/{SUDOUSER}/omz.sh", shell=True)
+    system(f"touch /home/{SUDOUSER}/omz.sh")
     
     with open(f'/home/{SUDOUSER}/omz.sh', 'w') as f: 
         f.writelines([
@@ -900,9 +916,9 @@ def ohmyzsh() -> None:
             "sed -i -e 's/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/' .zshrc"
         ])
     
-    call(f'chown {SUDOUSER} /home/{SUDOUSER}/omz.sh', shell=True)
-    call(f'chmod +x /home/{SUDOUSER}/omz.sh', shell=True)
-    call("touch /root/omz.sh'")
+    system(f'chown {SUDOUSER} /home/{SUDOUSER}/omz.sh')
+    system(f'chmod +x /home/{SUDOUSER}/omz.sh')
+    system("touch /root/omz.sh'")
     with open('/root/omz.sh', 'w') as f: 
         f.writelines([
             "#!/bin/bash\n",
@@ -916,7 +932,7 @@ def ohmyzsh() -> None:
             "sed -i -e 's/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/' .zshrc"
         ])
     
-    call(f'chmod +x /root/omz.sh', shell=True)
+    system(f'chmod +x /root/omz.sh')
     
     printer("print",31)
 
@@ -927,10 +943,10 @@ def ohmyzsh() -> None:
 def optimizations() -> None:
     
     utils.clear(); printer("print",32)
-    call(r"""sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=".*"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 nowatchdog"/' /etc/default/grub &> /dev/null""", shell=True)
-    utils.live_tasker("grub-mkconfig -o /boot/grub/grub.cfg")
-    call("systemctl mask lvm2-monitor")
-    call("touch /etc/modprobe.d/blacklists.conf")
+    system(r"""sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=".*"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 nowatchdog"/' /etc/default/grub &> /dev/null""")
+    system("grub-mkconfig -o /boot/grub/grub.cfg")
+    system("systemctl mask lvm2-monitor")
+    system("touch /etc/modprobe.d/blacklists.conf")
     with open('/etc/modprobe.d/blacklists.conf', 'w') as f:
         f.writelines([
             "blacklist iTCO_wdt\n",
@@ -946,7 +962,7 @@ def optimizations() -> None:
 def software() -> None:
     utils.clear()
 
-    if d.yesno(reader("26")+"""\n -> baobab \n -> ntfs-3g \n 
+    if d.yesno(reader(26)+"""\n -> baobab \n -> ntfs-3g \n 
 			-> exfat-utils \n -> xarchiver \n -> gparted \n 
 			-> wine \n -> exe-thumbnailer \n -> brave \n 
 			-> github-desktop \n -> playonlinux \n -> discord \n
@@ -959,7 +975,7 @@ def software() -> None:
         
         with open('/etc/X11/Xwrapper.config', 'w') as f: f.write("allowed_users=anybody")
         
-        call(f"touch /home/{SUDOUSER}/software.sh")
+        system(f"touch /home/{SUDOUSER}/software.sh")
         with open(f'/home/{SUDOUSER}/software.sh', 'w') as f: 
             f.writelines([
                 "#!/bin/bash\n",
@@ -974,8 +990,8 @@ def software() -> None:
                 "systemctl enable xrdp-sesman \\\n",
                 "systemctl enable preload \\\n"
             ])
-        call(f"chown {SUDOUSER} /home/{SUDOUSER}/software.sh", shell=True)
-        call(f"chmod +x /home/{SUDOUSER}/software.sh", shell=True)
+        system(f"chown {SUDOUSER} /home/{SUDOUSER}/software.sh")
+        system(f"chmod +x /home/{SUDOUSER}/software.sh")
         printer("print",33); print(" ")
         print("=============== OK =============== \n")
         input(reader(15))
@@ -984,8 +1000,8 @@ def software() -> None:
 def finisher() -> None:
     
     utils.clear(); d.msgbox(reader(27),7,50)
-    call("rm -f /arch-setupper.py &> /dev/null", shell=True)
-    utils.clear(); printer("print", 34); exit(0)
+    system("rm -f /arch-setupper.py &> /dev/null")
+    utils.clear(); printer("print", 34); system("exit"); exit(0)
     
 class utils:
     
@@ -1000,17 +1016,7 @@ class utils:
         finally:
             tcsetattr(fd, TCSADRAIN, oldSettings)
         return answer
-    
-    def live_tasker(cmd: str) -> int:
-        task = Popen(cmd, stdout=PIPE, stderr=PIPE, encoding='utf8', shell=True)
-        try:  
-            while task.poll() is None:
-                for line in task.stdout:
-                    task.stdout.flush()
-                    print(line.replace("\n", ""))
-            return task.poll()
-        except: return 1
-    
+
     def spinning():
         while True:
             for cursor in '|/-\\':

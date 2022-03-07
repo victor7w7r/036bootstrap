@@ -627,16 +627,6 @@ function diskformat() {
 	
 }
 
-function unmounter {
-	clear
-	if [ $DISKENVIRONMENT == "HDD" ]; then
-		umount "$ROOTPART"; swapoff "$SWAPPART"
-	elif [ $DISKENVIRONMENT == "SSD" ]; then
-		umount "$ROOTPART"
-	fi
-	printer print 22; exit 0
-}
-
 function pacstraper {
 
 	RES16=$(reader 15); clear; printer print 23;
@@ -645,7 +635,7 @@ function pacstraper {
 	linux-headers nano sudo vi vim git wget \
 	grub efibootmgr reflector os-prober rsync \
 	networkmanager neofetch base-devel openssh \
-	arch-install-scripts screen unrar p7zip zsh dialog dosfstools
+	arch-install-scripts screen unrar p7zip zsh dialog dosfstools f2fs-tools
 
 	genfstab -U /mnt >> /mnt/etc/fstab
 
@@ -660,9 +650,17 @@ function toggler {
 	cp "$0" /mnt/arch-setupper.sh
 	arch-chroot /mnt ./arch-setupper.sh chroot $DISKENVIRONMENT $LANGUAGE
 	if [ -f /mnt/arch-setupper.sh ]; then
-		printer error 24; printer print 25
+		printer error 24; printer print 25; exit 1
     fi
-	umount /mnt; exit 0
+	
+	if [ $DISKENVIRONMENT == "HDD" ]; then
+		umount "$ROOTPART"; swapoff "$SWAPPART"
+	elif [ $DISKENVIRONMENT == "SSD" ]; then
+		umount "$ROOTPART"
+	fi
+	printer print 22; exit 0
+
+	exit 0
 }
 
 function configurator {
