@@ -22,23 +22,23 @@ def main() -> None:
     global DISKENVIRONMENT
     global LANGUAGE
     
-    if(argv[0] == 'chroot'):
+    if argv[0] == 'chroot':
         DISKENVIRONMENT = argv[1]
         LANGUAGE = argv[2]
         corechroot()
     else: corelive()
     
 def corelive() -> None: 
-    utils.clear(); language(); cover(); verify(); diskenv(); 
+    utils.clear(); language(); cover(); verify(); diskenv(); disclaimer(); diskmenu()
 
 def corechroot() -> None:
-    configurator(); hostnamer(); localer(); newuser(); swapper()
-    xanmod(); graphical(); drivers(); aur(); ohmyzsh(); optimizations()
+    configurator(); hostnamer(); localer(); newuser(); liquorix()
+    graphical(); drivers(); aur(); ohmyzsh(); swapper(); optimizations()
     software(); finisher()
 
 def printer(type: str, position: int, additional: str = "") -> None:
     
-    GREEN = '\033[92m';  WARNING = '\033[93m'; FAIL = '\033[91m';  ENDC = '\033[0m';
+    GREEN = '\033[92m';  WARNING = '\033[93m'; FAIL = '\033[91m';  ENDC = '\033[0m'
 
     DICTIONARY_ENG=(
 		"Your Operating System is not GNU/Linux, exiting",
@@ -57,7 +57,7 @@ def printer(type: str, position: int, additional: str = "") -> None:
 		"You choose a SSD device, but this device is rotational, if is that not the case, that device is USB",
 		"You choose a HDD device, but this device is not rotational, please check and run this script again",
 		"The device doesn't have a EFI partition",
-		"The device has the EFI partition in other side than "+additional+" 1",
+		"The device has the EFI partition in other side than "+additional+"1",
 		"There's not disks available in your system, please verify!!!",
 		"All the partitions of the device are mounted in your system, please unmount the desired partition",
 		"=============== FORMAT ROOT FILESYSTEM AND SWAP =============== \n",
@@ -97,7 +97,7 @@ def printer(type: str, position: int, additional: str = "") -> None:
 		"Elegiste como SSD, pero este dispositivo es rotacional, si no es el caso, entonces este dispositivo es USB",
 		"Elegiste como HDD, pero este dispositivo no es rotational, por favor verifica y ejecuta este script otra vez",
 		"Este dispositivo no tiene una partición EFI",
-		"Este dispositivo tiene una partición EFI en otro lado que no sea "+additional+" 1",
+		"Este dispositivo tiene una partición EFI en otro lado que no sea "+additional+"1",
 		"No hay discos disponibles en tu sistema, por favor verifica!!!",
 		"Todas las particiones de este dispositivo están montadas, por favor desmonta tu partición de elección",
 		"=============== FORMATEAR PARTICIONES DE RAIZ E INTERCAMBIO =============== \n",
@@ -136,7 +136,7 @@ def printer(type: str, position: int, additional: str = "") -> None:
 def reader(position: int) -> str:
     
     DICTIONARY_ENG=(
-	    "Disk Environment",
+        "Disk Environment",
 		"Please choose your disk type \n",
 		"Hard Drive Disk",
 		"Solid State Disk or NVMe",
@@ -164,6 +164,7 @@ def reader(position: int) -> str:
 		"More Sofware!!",
 		"This script has a little pack of software, Do you like it?\n",
 		"READY!!!, Your PC is succesfully installed with Arch Linux, if you have errors, please report at 036bootstrap in GitHub"
+        "Choose your procesor"
 	)
 
     DICTIONARY_ESP=(
@@ -195,14 +196,14 @@ def reader(position: int) -> str:
 		"Más Sofware!!",
 		"Este script tiene un pequeño pack de software, ¿Te gusta?\n",
 		"LISTO!!!, Tu PC ya instalo de manera correcta a Arch Linux, si hubo errores, repórtalo en 036bootstrap / GitHub"
+        "Elige tu procesador"
 	)
    
     if LANGUAGE == 1: return DICTIONARY_ENG[position]
     else: return DICTIONARY_ESP[position]
 
 def commandverify(cmd: str) -> bool:
-    return call("type " + cmd, shell=True, 
-        stdout=PIPE, stderr=PIPE) == 0
+    return call("type " + cmd, shell=True, stdout=PIPE, stderr=PIPE) == 0
 
 def language() -> None:
     
@@ -210,16 +211,14 @@ def language() -> None:
     
     print("Bienvenido /  Welcome")
     print("Please, choose your language / Por favor selecciona tu idioma")
-    print("1) English")
-    print("2) Espanol")
-    
+    print("1) English"); print("2) Espanol")
     option: str = utils.char()
-
     if option == "1": LANGUAGE=1
     elif option == "2": LANGUAGE=2
     else: exit(1)
 
 def cover() -> None:
+    
     utils.clear()
     print(r'''                                     `"~>v??*^;rikD&MNBQku*;`                                           ''')
     print(r'''                                `!{wQNWWWWWWWWWWWWWWWNWWWWWWNdi^`                                       ''')
@@ -267,10 +266,6 @@ def cover() -> None:
     print(r''':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::''')
 
 def verify() -> None:
-    
-    LSB: str = Popen(r"""#!/bin/bash
-                        lsb_release -is
-                    """, shell=True, stdout=PIPE).stdout.read().decode('utf-8').replace("\n", "")
 
     if version_info < (3, 5):
         utils.clear(); printer("error",35); exit(1)
@@ -287,36 +282,31 @@ def verify() -> None:
     try: urlopen('http://google.com')
     except: utils.clear(); printer("error",4); exit(1)
 
-    printer("print",5); Popen("pacman -Sy &> /dev/null", shell=True)
+    printer("print",5); call("pacman -Sy &> /dev/null", shell=True)
     
     if not commandverify("lsb_release"):
         printer("print",6)
-        Popen(r"""#!/bin/bash
-                pacman -S lsb-release --noconfirm &> /dev/null
-                """, shell=True, stdout=PIPE)
+        call("pacman -S lsb-release --noconfirm &> /dev/null", shell=True)
+        
+    LSB: str = Popen("lsb_release -is", 
+                    shell=True, stdout=PIPE).stdout.read().decode('utf-8').replace("\n", "")
         
     if LSB != "Arch":
         utils.clear(); printer("error",7); exit(1)
     
     if not commandverify("fsck.f2fs"):
         printer("print",8)
-        Popen(r"""#!/bin/bash
-                pacman -S f2fs-tools --noconfirm &> /dev/null
-                """, shell=True, stdout=PIPE)
+        call("pacman -S f2fs-tools --noconfirm &> /dev/null", shell=True)
     
     if not commandverify("dialog"):
         printer("print",9)
-        Popen(r"""#!/bin/bash
-                pacman -S dialog --noconfirm &> /dev/null
-                """, shell=True, stdout=PIPE)
+        call("pacman -S dialog --noconfirm &> /dev/null", shell=True)
         
     if not commandverify("pacstrap"):
         printer("print",10)
-        Popen(r"""#!/bin/bash
-                pacman -S arch-install-scripts --noconfirm &> /dev/null
-                """, shell=True, stdout=PIPE)
+        call("pacman -S arch-install-scripts --noconfirm &> /dev/null", shell=True)
         
-    Popen("pacman -S ncurses --noconfirm &> /dev/null", shell=True)
+    call("pacman -S ncurses --noconfirm &> /dev/null", shell=True)
     printer("print",11)
     
     spinner = utils.spinning()
@@ -331,208 +321,184 @@ def diskenv() -> None:
         
     choices = [("HDD",reader(2)),("SSD-NVMe",reader(3))]
     response = d.menu(reader(1), 15, 50, 4, choices)
-    if(response[0] == "ok" and response[1] == reader(2)):
-        DISKENVIRONMENT="HDD"; disclaimer()
-    elif(response[0] == "ok" and response[1] == reader(3)):
-        DISKENVIRONMENT="SSD"; disclaimer()
+    if response[0] == "ok" and response[1] == "HDD":
+        DISKENVIRONMENT="HDD"
+    elif response[0] == "ok" and response[1] == "SSD-NVMe":
+        DISKENVIRONMENT="SSD"
     else: utils.clear(); exit(0)
     
 def disclaimer() -> None:
     
-    utils.clear(); d.msgbox(reader(4),8,70)
+    utils.clear()
+    d.msgbox(reader(4),8,70)
     
-    if(DISKENVIRONMENT == "HDD"):
+    if DISKENVIRONMENT == "HDD":
     
-        d.msgbox(reader(5)+""" \n \n
-                
-            GPT -> \n
-            1.	/dev/sdX1	EFI			200MB		fat32		esp\n
-            2.	/dev/sdX2	archlinux	>20GB		ext4		primary\n
-            3.	/dev/sdx3	linux-swap	2GB-4GB		swap		primary\n\n
+        d.msgbox(reader(5)+f"""
+            GPT ->
+            1.	/dev/sdX1	EFI			200MB		fat32		esp
+            2.	/dev/sdX2	archlinux	>20GB		ext4		primary
+            3.	/dev/sdx3	linux-swap	2GB-4GB		swap		primary
+            {reader(6)}
+            mklabel gpt
+            mkpart EFI fat32 1MiB 200MiB
+            set 1 esp on
+            mkpart ROOT ext4 200MiB 19.0GiB
+            mkpart SWAP linux-swap 19.0GiB 100%""",20,70)
     
-            """+reader(6)+"""
-                
-            mklabel gpt \n 
-            mkpart EFI fat32 1MiB 200MiB \n 
-            set 1 esp on \n 
-            mkpart ROOT ext4 200MiB 19.0GiB \n
-            mkpart SWAP linux-swap 19.0GiB 100% \n """,8,70)
-    
-    elif(DISKENVIRONMENT == "SSD"):
+    elif DISKENVIRONMENT == "SSD":
 
-        d.msgbox(reader(5)+""" \n \n
-                
-            GPT -> \n
-            1.	/dev/sdX1	EFI			200MB		fat32		esp\n
-            2.	/dev/sdX2	archlinux	>20GB		f2fs/ext4		primary\n
-
-            """+reader(6)+"""
-                
-            mklabel gpt \n
-            mkpart EFI fat32 1MiB 200MiB \n
-            set 1 esp on \n
-            mkpart ROOT f2fs 200MiB 100% \n """,8,70)
-
-    diskmenu()
+        d.msgbox(reader(5)+f"""
+            GPT ->
+            1.	/dev/sdX1	EFI			200MB		fat32		esp
+            2.	/dev/sdX2	archlinux	>20GB		f2fs/ext4		primary
+            {reader(6)}  
+            mklabel gpt
+            mkpart EFI fat32 1MiB 200MiB
+            set 1 esp on
+            mkpart ROOT f2fs 200MiB 100% """,20,70)
     
 def diskverify(device: str) -> None:
-    utils.clear()
 
     global DISK
+    utils.clear()
     
     EFI: str = ""; EFIORDER: str = ""
     BLOCK: str = ""; ROTATIONAL: str = ""
     
-    LABEL: str = Popen(r"""#!/bin/bash
-                        blkid -o value -s PTTYPE """ +device
-                        ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
-    
-    if(LABEL == "dos"): printer("error",12); exit(1)
-    if(search("sd[[:alpha:]]",device)):
-        EFI = Popen(r"""#!/bin/bash
-                        fdisk -l """+device+""" | sed -ne '/EFI/p' """ +device, 
+    LABEL: str = Popen(f"blkid -o value -s PTTYPE {device}",
                         shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
-        EFIORDER = Popen(r"""#!/bin/bash
-                            echo """+device+""" | sed -ne '/[[:alpha:]]1/p' 
-                        """
-                        ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
+    
+    if LABEL == "dos": printer("error",12); exit(1)
+    if search("sd[A-Za-z]",device):
+        EFI = Popen(f"fdisk -l {device} | sed -ne '/EFI/p'", 
+                        shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
+        EFIORDER = Popen(f"echo {EFI} | sed -ne '/[[:alpha:]]1/p'",
+                        shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
         
-        if(DISKENVIRONMENT == "SSD"):
-            BLOCK = Popen(r"""#!/bin/bash
-                            echo """+device+""" | cut -d "/" -f3"""
-                        ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
+        if DISKENVIRONMENT == "SSD":
+            BLOCK = Popen(f'echo {device} | cut -d "/" -f3',
+                        shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
             
-            ROTATIONAL = Popen(r"""#!/bin/bash
-                            cat /sys/block/+"""+BLOCK+"""+/queue/rotational"""
-                        ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
+            ROTATIONAL = Popen(f"cat /sys/block/{BLOCK}/queue/rotational",
+                        shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
             
-            if(ROTATIONAL == "1"): printer("error",13); exit(1)
+            if ROTATIONAL == "1": printer("error",13); exit(1)
             
-        if(DISKENVIRONMENT == "HDD"):
-            BLOCK = Popen(r"""#!/bin/bash
-                            echo """+device+""" | cut -d "/" -f3"""
-                        ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
+        if DISKENVIRONMENT == "HDD":
+            BLOCK = Popen(f'echo {device} | cut -d "/" -f3',
+                        shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
             
-            ROTATIONAL = Popen(r"""#!/bin/bash
-                            cat /sys/block/+"""+BLOCK+"""+/queue/rotational"""
-                        ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
+            ROTATIONAL = Popen(f"cat /sys/block/{BLOCK}/queue/rotational",
+                        shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
             
             if(ROTATIONAL == "0"): printer("error",14); exit(1)
             
-        if(EFI == ""): printer("error",15); exit(1)
-        if(EFIORDER == ""): printer("error",16,device); exit(1)  
+        if EFI == "": printer("error",15); exit(1)
+        if EFIORDER == "": printer("error",16,device); exit(1)  
+        DISK = device; rootpartmenu()
+        
+    elif search("mmcblk[0-9_-]",device):
+        EFI = Popen(f"fdisk -l {device} | sed -ne '/EFI/p'", 
+                        shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
+        EFIORDER = Popen(f"echo {EFI} | sed -ne '/[[:alpha:]]1/p'",
+                        shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
+        
+        if DISKENVIRONMENT == "HDD": printer("error",14); exit(1)
+        if EFI == "": printer("error",15); exit(1)
+        if EFIORDER == "": printer("error",16,device); exit(1)  
         
         DISK = device; rootpartmenu()
         
-    elif(search("mmcblk[[:digit:]]",device)):
-        EFI = Popen(r"""#!/bin/bash
-                        fdisk -l """+device+""" | sed -ne '/EFI/p' """ +device, 
+    elif(search("nvme[0-9_-]",device)):
+        EFI = Popen(f"fdisk -l {device} | sed -ne '/EFI/p'", 
                         shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
-        EFIORDER = Popen(r"""#!/bin/bash
-                            echo """+device+""" | sed -ne '/[[:alpha:]]1/p' 
-                        """
-                        ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
-        
-        if(DISKENVIRONMENT == "HDD"): printer("error",14); exit(1)
-        if(EFI == ""): printer("error",15); exit(1)
-        if(EFIORDER == ""): printer("error",16,device); exit(1)  
-        
-        DISK = device; rootpartmenu()
-        
-    elif(search("nvme[[:digit:]]",device)):
-        EFI = Popen(r"""#!/bin/bash
-                        fdisk -l """+device+""" | sed -ne '/EFI/p' """ +device, 
+        EFIORDER = Popen(f"echo {EFI} | sed -ne '/[[:alpha:]]1/p'",
                         shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
-        EFIORDER = Popen(r"""#!/bin/bash
-                            echo """+device+""" | sed -ne '/[[:alpha:]]1/p' 
-                        """
-                        ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
         
-        if(DISKENVIRONMENT == "HDD"): printer("error",14); exit(1)
-        if(EFI == ""): printer("error",15); exit(1)
-        if(EFIORDER == ""): printer("error",16,device); exit(1)  
+        if DISKENVIRONMENT == "HDD": printer("error",14); exit(1)
+        if EFI == "": printer("error",15); exit(1)
+        if EFIORDER == "": printer("error",16,device); exit(1)  
         
         DISK = device; rootpartmenu()
 
 def diskmenu() -> None:
-    utils.clear()    
     
     global ROOTPART
+    
+    utils.clear()
     
     COUNT: int = 0; BLOCK: list = []; DIRTYDEVS: list = []
     MODEL: int = 0; DEVICE: str = ""; ARRAY: list = []
     
-    DEVICES: list = Popen(r"""find /dev/disk/by-path/ | sed 's/^\/dev\/disk\/by-path\///'
-                            """, shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
+    DEVICES: list = Popen("find /dev/disk/by-path/ | sed 's/^\/dev\/disk\/by-path\///'", 
+                        shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
     
     for DEVICETEMP in DEVICES:
-        DIRTYDEVS.append(Popen('''#!/bin/bash
-                                readlink "/dev/disk/by-id/''' +DEVICETEMP+'''"''', shell=True, 
-                                stdout=PIPE).stdout.read().decode('utf-8')
-                                    .rstrip().split("\n")[0]); COUNT += 1
-        
-    DIRTYDEVS = list(filter(('').__ne__, DIRTYDEVS)); 
+        DIRTYDEVS.append(Popen(f'readlink "/dev/disk/by-path/{DEVICETEMP}"', 
+                                shell=True, stdout=PIPE).stdout.read().decode('utf-8')
+                                .rstrip().split("\n")[0]); COUNT += 1
+
+    DIRTYDEVS = list(filter(('').__ne__, DIRTYDEVS))
     
-    if(COUNT == 0): printer("error",17); exit(1)
+    if COUNT == 0: printer("error",17); exit(1)
     COUNT = 0
     
     for DEV in DIRTYDEVS:
-        ABSOLUTEPARTS = Popen(r"""#!/bin/bash
-                            echo """+DEV+""" | sed 's/^\.\.\/\.\.\//\/dev\//' | sed '/.*[[:alpha:]]$/d' | sed '/blk[[:digit:]]$/d' | sed '/nvme[[:digit:]]n[[:digit:]]$/d'""", 
+        ABSOLUTEPARTS = Popen(f"""
+                            echo {DEV} | sed 's/^\.\.\/\.\.\//\/dev\//' | sed '/.*[[:alpha:]]$/d' | sed '/blk[[:digit:]]$/d' | sed '/nvme[[:digit:]]n[[:digit:]]$/d'""", 
                             shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
         
         if ABSOLUTEPARTS == "":
-            BLOCK.append(Popen(r"""#!/bin/bash
-                                echo """+DEV+""" | sed 's/^\.\.\/\.\.\///'""", 
+            BLOCK.append(Popen(f"echo {DEV} | sed 's/^\.\.\/\.\.\///'", 
                                 shell=True, stdout=PIPE).stdout.read()
                                 .decode('utf-8').rstrip().split("\n")[0])
+            
     for PART in BLOCK:
         DEVICE: str = "/dev/"+PART
         BLOCKSTAT: str = BLOCK[COUNT]
-        SIZE: str = Popen(r'''#!/bin.bash
-                    lsblk -no SIZE /dev/'''+PART+''' | head -1 | sed s/..//''',
+        SIZE: str = Popen(f'lsblk -no SIZE /dev/{PART} | head -1 | sed s/..//',
                     shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
-        MODEL: str = Popen(r'''#!/bin.bash
-                cat /sys/class/block/'''+BLOCKSTAT+'''/device/model''',
-                shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
+        MODEL: str = Popen(f'cat /sys/class/block/{BLOCKSTAT}/device/model',
+                    shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
         ARRAY.append([DEVICE, MODEL + " " + SIZE]); COUNT +=1
         
+
     response = d.menu(reader(8), 15, 50, 4, ARRAY)
     if(response[0] == "ok"): diskverify(response[1])
     else: utils.clear(); exit(0)
 
 def rootpartmenu() -> None:
+    
     utils.clear()
-    VERIFY: list = []; TYPE: str = ""; EFIPART: str = ""
+    
+    global ROOTPART; global EFIPART
+    
+    VERIFY: list = []; TYPE: str = ""
     COUNT: int = 0; COUNTMOUNT: int = 0
     ISMOUNTED: str = ""; ROOTPARTS: list = []
+
+    EFIPART = Popen(f'fdisk -l {DISK} | sed -ne /EFI/p | cut -d " " -f1',
+                    shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')[0]
     
-    EFIPART = Popen(r'''#!/bin/bash
-                        fdisk -l '''+DISK+''' | sed -ne /EFI/p | cut -d " " -f1'''
-                        ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
-    
-    if(search("sd[[:alpha:]]",DISK)):
-        VERIFY = Popen(r"""#!/bin/bash
-                    find """+DISK+"""* | sed '/[[:alpha:]]$/d'"""
-                ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
-    elif(search("mmcblk[[:digit:]]",DISK)):
-        VERIFY = Popen(r"""#!/bin/bash
-                    find """+DISK+"""* | sed '/k[[:digit:]]$/d'"""
-                ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
-    elif(search("nvme[[:digit:]]n[[:digit:]]",DISK)):
-        VERIFY = Popen(r"""#!/bin/bash
-                    find """+DISK+"""* | sed '/e[[:digit:]]n[[:digit:]]$/d'"""
-                ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
+    if search("sd[A-Za-z]",DISK):
+        VERIFY = Popen(f"find {DISK}* | sed '/[[:alpha:]]$/d'",
+                shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
+    elif search("mmcblk[0-9_-]",DISK):
+        VERIFY = Popen(f"find {DISK}* | sed '/k[[:digit:]]$/d'",
+                shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
+    elif search("nvme[0-9_-]n[0-9_-]",DISK):
+        VERIFY = Popen(f"find {DISK}* | sed '/e[[:digit:]]n[[:digit:]]$/d'",
+                shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
         
     for PART in VERIFY:
-        if(PART != EFIPART):
-            ISMOUNTED = Popen(r"""#!/bin/bash
-                        lsblk """+PART+"""* |  sed -ne '/\//p'"""
-                    ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
-            if(ISMOUNTED != ""): COUNTMOUNT += 1
+        if PART != EFIPART:
+            ISMOUNTED = Popen(f"lsblk {PART} | sed -ne '/\//p'",
+                    shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
+            if ISMOUNTED != "": COUNTMOUNT += 1
             else: ROOTPARTS.append([PART,TYPE])
             COUNT += 1
-    if(COUNTMOUNT == COUNT): utils.clear(); printer("error", 18); exit(1)
+    if COUNTMOUNT == COUNT: utils.clear(); printer("error", 18); exit(1)
     
     response = d.menu(reader(10), 15, 50, 4, ROOTPARTS)
     
@@ -541,33 +507,33 @@ def rootpartmenu() -> None:
     else: utils.clear(); exit(0)
     
 def swapmenu(temp: str) -> None:
-    if(temp == ""): utils.clear(); exit(0)
+    
     utils.clear()
-    if(DISKENVIRONMENT == "HDD"):
+    
+    global SWAPPART
+    
+    if temp == "": utils.clear(); exit(0)
+    if DISKENVIRONMENT == "HDD":
         VERIFY: str = ""; TYPE: str = ""
         COUNT: int = 0; COUNTMOUNT: int = 0
         ISMOUNTED: int = 0; SWAPPARTS: list = []
         
-        if(search("sd[[:alpha:]]",DISK)):
-            VERIFY = Popen(r"""#!/bin/bash
-                        find """+DISK+"""* | sed '/[[:alpha:]]$/d'"""
-                    ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
-        elif(search("mmcblk[[:digit:]]",DISK)):
-            VERIFY = Popen(r"""#!/bin/bash
-                        find """+DISK+"""* | sed '/k[[:digit:]]$/d'"""
-                    ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
-        elif(search("nvme[[:alpha:]]",DISK)):
-            VERIFY = Popen(r"""#!/bin/bash
-                        find """+DISK+"""* | sed '/e[[:digit:]]$/d'"""
-                    ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
+        if search("sd[A-Za-z]",DISK):
+            VERIFY = Popen(f"find {DISK}* | sed '/[[:alpha:]]$/d'",
+                    shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
+        elif(search("mmcblk[0-9_-]",DISK)):
+            VERIFY = Popen(f"find {DISK}* | sed '/k[[:digit:]]$/d'",
+                    shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
+        elif(search("nvme[0-9_-]",DISK)):
+            VERIFY = Popen(f"find {DISK}* | sed '/e[[:digit:]]$/d'",
+                    shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
             
         for PART in VERIFY:
-            if(PART != EFIPART):
-                if(PART != ROOTPART):
-                    ISMOUNTED = Popen(r"""#!/bin/bash
-                            lsblk """+PART+""" |  sed -ne '/\//p'"""
-                        ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
-                if(ISMOUNTED != ""): COUNTMOUNT += 1
+            if PART != EFIPART:
+                if PART != ROOTPART:
+                    ISMOUNTED = Popen(f"lsblk {PART} | sed -ne '/\//p'",
+                        shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
+                if ISMOUNTED != "": COUNTMOUNT += 1
                 else: SWAPPARTS.append([PART,TYPE])
                 COUNT += 1
                 
@@ -581,38 +547,34 @@ def swapmenu(temp: str) -> None:
     elif(DISKENVIRONMENT == "SSD"): diskformat("pass")
     
 def diskformat(temp: str) -> None:
-    if(temp == ""): utils.clear(); exit(0)
+    
+    if temp == "": utils.clear(); exit(0)
     utils.clear()
-    if(DISKENVIRONMENT == "HDD"):
-        if d.yesno(reader(14)+"""\n"""+EFIPART+""" (EFI) \n
-                    """+ROOTPART+""" (ROOT) \n """+SWAPPART+""" (SWAP)""",8,60) == d.OK:
+    if DISKENVIRONMENT == "HDD":
+        if d.yesno(reader(14)+f"\n{EFIPART} (EFI) \n{ROOTPART} (ROOT) \n{SWAPPART} (SWAP)",8,60) == d.OK:
+            utils.clear()
             printer("print",19)
-            print(Popen(r"""#!/bin/bash
-                            mkfs.ext4 """ +ROOTPART+ """
-                            mkswap """ +SWAPPART+ """
-                            swapon """ +SWAPPART
-                        ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip())
+            utils.live_tasker(f"mkfs.ext4 {ROOTPART}")
+            utils.live_tasker(f"mkswap {SWAPPART}")
+            call(f"swapon {SWAPPART}", shell=True)
             print(" ")
             print("=============== OK =============== \n")
             input(reader(15))
         else: utils.clear(); exit(0)
-    elif(DISKENVIRONMENT == "SSD"):
+    elif DISKENVIRONMENT == "SSD":
         if d.yesno(reader(14)+"\n"+EFIPART+" (EFI) \n "+ROOTPART+" (ROOT)",7,60) == d.OK:
+            utils.clear();
             printer("print",20)
-            print(Popen(r"""#!/bin/bash
-                            mkfs.f2fs """ +ROOTPART
-                        ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip())
+            utils.live_tasker(f"mkfs.f2fs {ROOTPART}")
             print(" ")
             print("=============== OK =============== \n")
             input(reader(15))
         else: utils.clear(); exit(0)
-        
+    utils.clear()
     printer("print",21); 
-    print(Popen(r"""#!/bin/bash
-                    mkfs.fat -F32 """ +EFIPART
-                ,shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip())  
-    Popen("mount "+ROOTPART+" /mnt; mkdir /mnt/efi", shell=True)
-    Popen("mount "+EFIPART+" /mnt/efi", shell=True)
+    utils.live_tasker(f"mkfs.fat -F32 {EFIPART}")
+    call(f"mount {ROOTPART} /mnt; mkdir /mnt/boot; mkdir /mnt/boot/efi", shell=True)
+    call(f"mount {EFIPART} /mnt/boot/efi", shell=True)
     
     print(" ")
     print("=============== OK =============== \n")
@@ -620,100 +582,109 @@ def diskformat(temp: str) -> None:
     
 def unmounter() -> None:
     utils.clear()
-    if(DISKENVIRONMENT == "HDD"):
-        Popen("umount "+ROOTPART+" /mnt; swapoff "+SWAPPART, shell=True)
-    elif(DISKENVIRONMENT == "SSD"):
-        Popen("umount "+ROOTPART, shell=True)
+    if DISKENVIRONMENT == "HDD":
+        call(f"umount {ROOTPART} /mnt; swapoff {SWAPPART}", shell=True)
+    elif DISKENVIRONMENT == "SSD":
+        call(f"umount {ROOTPART}", shell=True)
     printer("print",22); exit(0)
 
 def pacstraper() -> None:
     utils.clear(); printer("print",23)
-    proc = Popen(r"""
-                        #!/bin/bash
+    utils.live_tasker("""
                         pacstrap /mnt base linux linux-firmware nano sudo vi vim git wget \
                         grub efibootmgr reflector os-prober rsync networkmanager neofetch \
-                        openssh arch-install-scripts screen unrar p7zip zsh dialog python python-pip
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    for line in iter(proc.stdout.readline, b''):
-        print(line.rstrip())
-
-    Popen("genfstab -U /mnt >> /mnt/etc/fstab", shell=True)
+                        openssh arch-install-scripts screen unrar p7zip zsh dialog python python-pip""")
+    
+    call("genfstab -U /mnt >> /mnt/etc/fstab", shell=True)
     
     print(" ")
     print("=============== OK =============== \n")
     input(reader(15)); toggler()
     
 def toggler() -> None:
-    Popen("cp " +__file__+ "/mnt/arch-setupper.py", shell=True) 
-    Popen(r"""
-            #!/bin/bash
-            arch-chroot /mnt \
-                pip install pythondialog && python3 ./arch-setupper.py chroot """ +DISKENVIRONMENT+""" """+LANGUAGE
-        , shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    call(f"cp {__file__} /mnt/arch-setupper.py", shell=True) 
+    call(f"arch-chroot /mnt pip install pythondialog && python3 ./arch-setupper.py chroot {DISKENVIRONMENT} {LANGUAGE}",
+            shell=True)
     
 def configurator() -> None:
+    
     utils.clear(); printer("print",26)
     call("passwd",shell=True)
     print(" ")
     print("=============== OK =============== \n")
     input(reader(15))
+    
+    choices = [("Intel","intel-ucode"),("AMD","amd-code")]
+    response = d.menu(reader(28), 15, 50, 4, choices)
+    
+    if response[0] == "ok" and response[1] == "Intel":
+        utils.clear()
+        print("=============== INTEL MICROCODE  =============== \n")
+        call("pacman -S intel-ucode --noconfirm", shell=True)
+        print(" ")
+        print("=============== OK =============== \n")
+        input(reader(15))
+    elif response[0] == "ok" and response[1] == "AMD":
+        utils.clear()
+        print("=============== AMD MICROCODE  =============== \n")
+        call("pacman -S amd-ucode --noconfirm", shell=True)
+        print(" ")
+        print("=============== OK =============== \n")
+        input(reader(15))
+    else: utils.clear(); exit(0)
+
     utils.clear(); printer("print",27)
-    proc = Popen(r"""
-                    #!/bin/bash
-                    grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB
-                    grub-mkconfig -o /boot/grub/grub.cfg
-                    umount /efi
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    for line in iter(proc.stdout.readline, b''):
-        print(line.rstrip())
+    utils.live_tasker("grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=arch")
+    utils.live_tasker("grub-mkconfig -o /boot/grub/grub.cfg")
+    utils.live_tasker("umount /boot/efi")
         
     print(" ")
     print("=============== OK =============== \n")
     input(reader(15))
     utils.clear(); printer("print",28)
     
-    proc = Popen(r"""
-                    #!/bin/bash
-                    systemctl enable NetworkManager
-                    systemctl enable sshd
-                    sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin Yes/' \
-                    /etc/ssh/sshd_config &> /dev/null
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    for line in iter(proc.stdout.readline, b''):
-        print(line.rstrip())    
+    utils.live_tasker("systemctl enable NetworkManager")
+    utils.live_tasker("systemctl enable sshd")
+    utils.live_tasker(r"sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin Yes/' /etc/ssh/sshd_config &> /dev/null")
+    
+    print(" ")
+    print("=============== OK =============== \n")
+    input(reader(15))
 
 def hostnamer() -> None:
     response = d.inputbox(reader(16), 8, 80)
-    if(response[0] == "ok" ):
-        Popen(r"""
-            #!/bin/bash
-            echo """+response[1]+""" > /etc/hostname
-            echo 127.0.1.1 """+response[1]+"""  >> /etc/hosts
-            """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        
-    elif(response[0] == "cancel" ): exit(0)
+    if response[0] == "ok":
+        with open('/etc/hostname', 'w') as f: f.write(response[1])
+        with open('/etc/hosts', 'a') as f: 
+            f.write(f"echo 127.0.1.1 {response[1]}")
+    elif response[0] == "cancel" : exit(0)
     
 def localer() -> None:
     utils.clear(); d.msgbox(reader(17))
-    Popen(r"""
-            #!/bin/bash
-        ln -sf /usr/share/zoneinfo/America/Guayaquil /etc/localtime
-        hwclock --systohc
-        """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    call("ln -sf /usr/share/zoneinfo/America/Guayaquil /etc/localtime", shell=True)
+    call(" hwclock --systohc",shell=True)
+
     choices = [("Spanish/Español","es_ES"),("English","en_US")]
     response = d.menu(reader(18), 12, 50, 4, choices)
-    if(response[0] == "ok" and response[1] == "Spanish/Español"):
-        Popen("sed -i 's/^#es_ES.UTF-8 UTF-8/es_ES.UTF-8 UTF-8/' /etc/locale.gen &> /dev/null", shell=True)
-        Popen("locale-gen", shell=True)
-        Popen("echo 'LANG=\"es_ES.UTF-8\"' > /etc/locale.conf", shell=True)
-        Popen("echo 'LC_TIME=\"es_ES.UTF-8\"' >> /etc/locale.conf", shell=True)
-        Popen("echo 'LANGUAGE=\"es_EC:es_ES:es\"' >> /etc/locale.conf", shell=True)
-    elif(response[0] == "ok" and response[1] == "English"):
-        Popen("sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &> /dev/null", shell=True)
-        Popen("locale-gen", shell=True)
-        Popen("echo 'LANG=\"en_US.UTF-8\"' > /etc/locale.conf", shell=True)
-        Popen("echo 'LC_TIME=\"en_US.UTF-8\"' >> /etc/locale.conf", shell=True)
-        Popen("echo 'LANGUAGE=\"es_US:en\"' >> /etc/locale.conf", shell=True)
+    if response[0] == "ok" and response[1] == "Spanish/Español":
+        call("sed -i 's/^#es_ES.UTF-8 UTF-8/es_ES.UTF-8 UTF-8/' /etc/locale.gen &> /dev/null", shell=True)
+        utils.live_tasker("locale-gen")
+        with open('/etc/locale.conf', 'w') as f: 
+            f.writelines([
+                'LANG="es_ES.UTF-8"\n',
+                'LC_TIME="es_ES.UTF-8"\n',
+                'LANGUAGE="es_EC:es_ES:es"\n'
+                ])
+    elif response[0] == "ok" and response[1] == "English":
+        call("sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &> /dev/null", shell=True)
+        utils.live_tasker("locale-gen")
+        with open('/etc/locale.conf', 'w') as f: 
+            f.writelines([
+                'LANG="en_US.UTF-8"\n',
+                'LC_TIME="en_US.UTF-8"\n',
+                'LANGUAGE="es_US:en"\n'
+            ])
+        
     else: utils.clear(); exit(0)
     
 def newuser() -> None:
@@ -722,43 +693,34 @@ def newuser() -> None:
     
     utils.clear(); print("print",29)
     SUDOUSER = input(reader(19))
-    call("useradd --create-home "+SUDOUSER,shell=True)
-    call("passwd "+SUDOUSER,shell=True)
-    call("usermod -aG wheel,storage,power "+SUDOUSER,shell=True)
-    Popen("sed -i 's/^#.*%wheel ALL=(ALL) ALL$/%wheel ALL=(ALL) ALL/' /etc/sudoers &> /dev/null", shell=True)
+    utils.live_tasker(f"useradd --create-home {SUDOUSER}",shell=True)
+    utils.live_tasker(f"passwd {SUDOUSER}",shell=True)
+    utils.live_tasker(f"usermod -aG wheel,storage,power {SUDOUSER}",shell=True)
+    call("sed -i 's/^#.*%wheel ALL=(ALL) ALL$/%wheel ALL=(ALL) ALL/' /etc/sudoers &> /dev/null", shell=True)
     
     print(" ")
     print("=============== OK =============== \n")
     input(reader(15))
 
-def swapper() -> None:
+def liquorix() -> None:
+    
     utils.clear()
-    print("=============== SWAPPING =============== \n")
-    
-    if(DISKENVIRONMENT == "HDD"):
-        Popen("echo \"vm.swappiness=60\" >> /etc/sysctl.d/99-sysctl.conf", shell=True)
-    if(DISKENVIRONMENT == "SSD"):
-        pass
-    
-    print(" ")
-    print("=============== OK =============== \n")
-    input(reader(15))
-    
-def xanmod() -> None:
-    utils.clear()
-    print( "=============== XANMOD KERNEL =============== \n" )
-    Popen("sed -i \"/\[multilib\]/,/Include/\"'s/^#//' /etc/pacman.conf", shell=True)
-    Popen("""sed -i 's/^SigLevel    = Required DatabaseOptional$/SigLevel = PackageOptional/' \
-		/etc/pacman.conf &> /dev/null""", shell=True)
-    Popen('echo "[kernel]" >> /etc/pacman.conf', shell=True)
-    Popen("echo 'Server = https://repo.archlinuxrepo.dev/$arch/$repo' >> /etc/pacman.conf", shell=True)
-    Popen("pacman -Syyu linux-xanmod linux-xanmod-headers --noconfirm", shell=True)
-    
+    print( "=============== LIQUORIX KERNEL =============== \n" )
+    call("sed -i \"/\[multilib\]/,/Include/\"'s/^#//' /etc/pacman.conf", shell=True)
+    call("sed -i 's/^SigLevel    = Required DatabaseOptional$/SigLevel = PackageOptional/' /etc/pacman.conf &> /dev/null", shell=True)
+    with open('/etc/pacman.conf', 'a') as f: 
+        f.writelines([
+            '[kernel]\n',
+            'Server = https://repo.archlinuxrepo.dev/$arch/$repo'
+        ])
+    utils.live_tasker("pacman -Syyu linux-lqx linux-lqx-headers --noconfirm", shell=True)
+    utils.live_tasker("grub-mkconfig -o /boot/grub/grub.cfg")
     print(" ")
     print("=============== OK =============== \n")
     input(reader(15))
     
 def graphical() -> None:
+    
     utils.clear()
     choices = [
         ("XFCE","Xfce Desktop Environment"),
@@ -770,86 +732,66 @@ def graphical() -> None:
     ]
     response = d.menu(reader(21), 15, 50, 4, choices)
     
-    if(response[0] == "ok" and response[1] == "XFCE"):
+    if response[0] == "ok" and response[1] == "XFCE":
         utils.clear()
         print("=============== XFCE =============== \n")
-        proc = Popen(r"""
-                    #!/bin/bash
-                    pacman -S xorg --noconfirm
-                    pacman -S xfce4 xfce4-goodies xfce4-terminal ttf-ubuntu-font-family \
-                    gtk-engines gtk-engine-murrine gnome-themes-standard \
-                    xdg-user-dirs ttf-dejavu gvfs xfce4-notifyd network-manager-applet \
-                    volumeicon firefox gdm grub-customizer nemo cinnamon-translations --noconfirm
-                    systemctl enable gdm
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
+            
+        utils.live_tasker("pacman -S xorg --noconfirm")
+        utils.live_tasker("pacman -S xfce4 xfce4-goodies xfce4-terminal ttf-ubuntu-font-family --noconfirm")
+        utils.live_tasker("pacman -S gtk-engines gtk-engine-murrine gnome-themes-standard --noconfirm")
+        utils.live_tasker("pacman -S xdg-user-dirs ttf-dejavu gvfs xfce4-notifyd network-manager-applet --noconfirm")
+        utils.live_tasker("pacman -S volumeicon firefox gdm grub-customizer nemo cinnamon-translations --noconfirm")
+        utils.live_tasker("systemctl enable gdm")
         
         print(" ")
         print("=============== OK =============== \n")
         input(reader(15))
         
-    elif(response[0] == "ok" and response[1] == "GNOME"):
+    elif response[0] == "ok" and response[1] == "GNOME":
         utils.clear()
         print("=============== GNOME =============== \n")
-        proc = Popen(r"""
-                    #!/bin/bash
-                    pacman -S xorg --noconfirm
-                    pacman -S gnome gdm gnome-themes-standard network-manager-applet \
-                    firefox grub-customizer nemo cinnamon-translations --noconfirm
-                    systemctl enable gdm
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
         
+        utils.live_tasker("pacman -S xorg --noconfirm")
+        utils.live_tasker("pacman -S gnome gdm gnome-themes-standard network-manager-applet --noconfirm")
+        utils.live_tasker("pacman -S firefox grub-customizer nemo cinnamon-translations --noconfirm")
+        utils.live_tasker("systemctl enable gdm")
+
         print(" ")
         print("=============== OK =============== \n")
         input(reader(15))
-    elif(response[0] == "ok" and response[1] == "KDE"):
+    elif response[0] == "ok" and response[1] == "KDE":
         utils.clear()
         print("=============== KDE =============== \n")
-        proc = Popen(r"""
-                    #!/bin/bash
-                    pacman -S xorg --noconfirm
-                    pacman -S plasma plasma-wayland-session kde-applications gnome-themes-standard network-manager-applet \
-                        firefox grub-customizer nemo cinnamon-translations --noconfirm
-                    systemctl enable sddm.service
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
+            
+        utils.live_tasker("pacman -S xorg --noconfirm")
+        utils.live_tasker("pacman -S plasma plasma-wayland-session kde-applications gnome-themes-standard --noconfirm")
+        utils.live_tasker("pacman -S network-manager-applet firefox grub-customizer nemo cinnamon-translations --noconfirm")
+        utils.live_tasker("systemctl enable sddm.service")
         
         print(" ")
         print("=============== OK =============== \n")
         input(reader(15))
-    elif(response[0] == "ok" and response[1] == "XORG"):
+    elif response[0] == "ok" and response[1] == "XORG":
         utils.clear()
         print("=============== XORG ONLY =============== \n")
-        proc = Popen(r"""
-                    #!/bin/bash
-                    pacman -S xorg --noconfirm
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
+        
+        utils.live_tasker("pacman -S xorg --noconfirm")
         
         print(" ")
         print("=============== OK =============== \n")
         input(reader(15))
         
-    elif(response[0] == "ok" and response[1] == "XORG"):
+    elif response[0] == "ok" and response[1] == "XORG":
         utils.clear()
         print("=============== CUTEFISH =============== \n")
-        proc = Popen(r"""
-                    #!/bin/bash
-                    pacman -S xorg --noconfirm
-                    pacman -S curefish --noconfirm
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
+        
+        utils.live_tasker("pacman -S xorg --noconfirm")
+        utils.live_tasker("pacman -S cutefish --noconfirm")
         
         print(" ")
         print("=============== OK =============== \n")
         input(reader(15))
-    elif(response[0] == "ok" and response[1] == "NOGUI"): return
+    elif response[0] == "ok" and response[1] == "NOGUI": return
     else: exit(0)
     
 def drivers() -> None:
@@ -863,41 +805,29 @@ def drivers() -> None:
     ]
     response = d.menu(reader(23), 15, 70, 4, choices)
     
-    if(response[0] == "ok" and response[1] == "Intel"):
+    if response[0] == "ok" and response[1] == "Intel":
         utils.clear()
         print("=============== INTEL =============== \n")
-        proc = Popen(r"""
-                    #!/bin/bash
-                    pacman -S xf86-video-intel intem-media-driver intel-media-sdk lib32-mesa --noconfirm
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
-        
+
+        utils.live_tasker("pacman -S xf86-video-intel intem-media-driver intel-media-sdk lib32-mesa --noconfirm")
+
         print(" ")
         print("=============== OK =============== \n")
         input(reader(15))
-    elif(response[0] == "ok" and response[1] == "ATI"):
+    elif response[0] == "ok" and response[1] == "ATI":
         utils.clear()
         print("=============== ATI =============== \n")
-        proc = Popen(r"""
-                    #!/bin/bash
-                    pacman -S xf86-video-ati --noconfirm
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
+
+        utils.live_tasker("pacman -S xf86-video-ati --noconfirm")
         
         print(" ")
         print("=============== OK =============== \n")
         input(reader(15))
-    elif(response[0] == "ok" and response[1] == "AMD"):
+    elif response[0] == "ok" and response[1] == "AMD":
         utils.clear()
         print("=============== AMD =============== \n")
-        proc = Popen(r"""
-                    #!/bin/bash
-                    pacman -S xf86-video-amdgpu --noconfirm
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
+
+        utils.live_tasker("pacman -S xf86-video-amdgpu --noconfirm")
         
         print(" ")
         print("=============== OK =============== \n")
@@ -905,12 +835,8 @@ def drivers() -> None:
     elif(response[0] == "ok" and response[1] == "NVIDIA"):
         utils.clear()
         print("=============== NVIDIA =============== \n")
-        proc = Popen(r"""
-                    #!/bin/bash
-                    pacman -S nvidia nvidia-utils --noconfirm
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
+            
+        utils.live_tasker("pacman -S nvidia nvidia-utils --noconfirm")
         
         print(" ")
         print("=============== OK =============== \n")
@@ -918,13 +844,9 @@ def drivers() -> None:
     elif(response[0] == "ok" and response[1] == "VMware"):
         utils.clear()
         print("=============== VMware =============== \n")
-        proc = Popen(r"""
-                    #!/bin/bash
-                    pacman -S gtkmm3 open-vm-tools xf86-input-vmmouse xf86-video-vmware --noconfirm
-                    systemctl enable vmtoolsd
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        for line in iter(proc.stdout.readline, b''):
-            print(line.rstrip())
+
+        utils.live_tasker("pacman -S gtkmm3 open-vm-tools xf86-input-vmmouse xf86-video-vmware --noconfirm")
+        utils.live_tasker("systemctl enable vmtoolsd")
         
         print(" ")
         print("=============== OK =============== \n")
@@ -932,45 +854,69 @@ def drivers() -> None:
     
 def aur() -> None:
     utils.clear(); printer("print",30)
-    proc = Popen(r"""
-                    #!/bin/bash
-                    pacman -S --needed base-devel fakeroot packer go --noconfirm
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    for line in iter(proc.stdout.readline, b''):
-        print(line.rstrip())
+
+    utils.live_tasker("pacman -S --needed base-devel fakeroot packer go --noconfirm")
     
-    call("sudo -u "+SUDOUSER+" bash -c 'cd; git clone https://aur.archlinux.org/yay-bin.git'",shell=True)    
-    call("sudo -u "+SUDOUSER+" bash -c 'cd; cd yay-bin; makepkg -si'",shell=True) 
-    call("sudo -u "+SUDOUSER+" bash -c 'cd; rm -rf yay-bin'",shell=True) 
+    call(f"sudo -u {SUDOUSER} bash -c 'cd; git clone https://aur.archlinux.org/yay-bin.git'",shell=True)    
+    call(f"sudo -u {SUDOUSER} bash -c 'cd; cd yay-bin; makepkg -si'",shell=True) 
+    call(f"sudo -u {SUDOUSER} bash -c 'cd; rm -rf yay-bin'",shell=True) 
     
     print(" ")
     print("=============== OK =============== \n")
     input(reader(15))
+
+def swapper() -> None:
     
+    utils.clear()
+    print("=============== SWAPPING =============== \n")
+    
+    if DISKENVIRONMENT == "HDD":
+        with open('/etc/sysctl.d/99-sysctl.conf', 'a') as f: 
+            f.write("vm.swappiness=60")
+    if DISKENVIRONMENT == "SSD":
+        call(f"sudo -u {SUDOUSER} bash -c 'yay -S zramswap'", shell=True)
+        utils.live_tasker("systemctl enable zramswap.service")
+    
+    print(" ")
+    print("=============== OK =============== \n")
+    input(reader(15))    
+
 def ohmyzsh() -> None:
     
     utils.clear()
     print("=============== OMZ =============== \n")
-    Popen("touch /home/"+SUDOUSER+"/omz.sh", shell=True)
-    Popen("echo '#!/bin/bash' > /home/"+SUDOUSER+"/omz.sh", shell=True)
-    Popen(r'echo \'sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"\' >> /home/'+SUDOUSER+'/omz.sh', shell=True)
-    Popen(r'echo \'sed -i -e "s/ZSH_THEME=.*/ZSH_THEME=\"pmcgee\"/" .zshrc\' >> /home/'+SUDOUSER+'/omz.sh', shell=True)
-    Popen(r'echo \'sed -i -e "/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true" .zshrc\' >> /home/'+SUDOUSER+'/omz.sh', shell=True)
-    Popen(r'echo \'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting\' >> /home/'+SUDOUSER+'/omz.sh', shell=True)
-    Popen(r'echo \'git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions\' >> /home/'+SUDOUSER+'/omz.sh', shell=True)
-    Popen(r'echo \'sed -i -e "s/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/" .zshrc\' >> /home/'+SUDOUSER+'/omz.sh', shell=True)
-    Popen('chown '+SUDOUSER+' /home/'+SUDOUSER+'/omz.sh', shell=True)
-    Popen('chmod +x /home/'+SUDOUSER+'/omz.sh', shell=True)
+    call(f"touch /home/{SUDOUSER}/omz.sh", shell=True)
     
-    Popen("touch /root/omz.sh", shell=True)
-    Popen("echo '#!/bin/bash' > /root/omz.sh", shell=True)
-    Popen(r'echo \'sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"\' >> /root/omz.sh', shell=True)
-    Popen(r'echo \'sed -i -e "s/ZSH_THEME=.*/ZSH_THEME=\"pmcgee\"/" .zshrc\' >> /root/omz.sh', shell=True)
-    Popen(r'echo \'sed -i -e "/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true" .zshrc\' >> /root/omz.sh', shell=True)
-    Popen(r'echo \'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting\' >> /root/omz.sh', shell=True)
-    Popen(r'echo \'git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions\' >> /root/omz.sh', shell=True)
-    Popen(r'echo \'sed -i -e "s/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/" .zshrc\' >> /root/omz.sh', shell=True)
-    Popen('chmod +x /root/omz.sh', shell=True)
+    with open(f'/home/{SUDOUSER}/omz.sh', 'w') as f: 
+        f.writelines([
+            "#!/bin/bash\n",
+            'sh -c "$(wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"\n',
+            'sed -i -e \'s/ZSH_THEME=.*/ZSH_THEME=\\\"pmcgee\\\"/\' .zshrc\n',
+            "sed -i -e '/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true' .zshrc\n",
+            r"git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting",
+            "\n",
+            r"git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions",
+            "\n",
+            "sed -i -e 's/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/' .zshrc"
+        ])
+    
+    call(f'chown {SUDOUSER} /home/{SUDOUSER}/omz.sh', shell=True)
+    call(f'chmod +x /home/{SUDOUSER}/omz.sh', shell=True)
+    call("touch /root/omz.sh'")
+    with open('/root/omz.sh', 'w') as f: 
+        f.writelines([
+            "#!/bin/bash\n",
+            'sh -c "$(wget https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"\n',
+            'sed -i -e \'s/ZSH_THEME=.*/ZSH_THEME=\\\"pmcgee\\\"/\' .zshrc\n',
+            "sed -i -e '/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true' .zshrc\n",
+            r"git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting",
+            "\n",
+            r"git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions",
+            "\n",
+            "sed -i -e 's/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/' .zshrc"
+        ])
+    
+    call(f'chmod +x /root/omz.sh', shell=True)
     
     printer("print",31)
 
@@ -979,21 +925,19 @@ def ohmyzsh() -> None:
     input(reader(15))
 
 def optimizations() -> None:
+    
     utils.clear(); printer("print",32)
-    proc = Popen(r"""
-                    #!/bin/bash
-                    sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=".*"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 nowatchdog"/' \
-                        /etc/default/grub &> /dev/null
-                    grub-mkconfig -o /boot/grub/grub.cfg
-                    systemctl mask lvm2-monitor
-                    touch /etc/modprobe.d/blacklists.conf
-                    echo 'blacklist iTCO_wdt' > /etc/modprobe.d/blacklists.conf
-                    echo 'blacklist joydev' >> /etc/modprobe.d/blacklists.conf
-                    echo 'blacklist mousedev' >> /etc/modprobe.d/blacklists.conf
-                    echo 'blacklist mac_hid' >> /etc/modprobe.d/blacklists.conf
-                    """, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    for line in iter(proc.stdout.readline, b''):
-        print(line.rstrip())
+    call(r"""sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=".*"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 nowatchdog"/' /etc/default/grub &> /dev/null""", shell=True)
+    utils.live_tasker("grub-mkconfig -o /boot/grub/grub.cfg")
+    call("systemctl mask lvm2-monitor")
+    call("touch /etc/modprobe.d/blacklists.conf")
+    with open('/etc/modprobe.d/blacklists.conf', 'w') as f:
+        f.writelines([
+            "blacklist iTCO_wdt\n",
+            "blacklist joydev\n",
+            "blacklist mousedev\n",
+            "blacklist mac_hid",
+        ])
     
     print(" ")
     print("=============== OK =============== \n")
@@ -1008,27 +952,30 @@ def software() -> None:
 			-> github-desktop \n -> playonlinux \n -> discord \n
             -> visual-studio-code-bin \n -> zerotier-gui-git \n -> notion-app \n
             -> teamviewer \n -> numix-gtk-theme-git \n -> numix-icon-theme-app \n
-            -> telegram-desktop \n -> preload """ ,20,65) == d.OK:
+            -> preload """ ,20,65) == d.OK:
         
         utils.clear()
         print("=============== SOFTWARE =============== \n")
         
-        Popen("touch /home/"+SUDOUSER+"/software.sh", shell=True)
-        Popen("echo allowed_users=anybody > /etc/X11/Xwrapper.config", shell=True)   
-        Popen("echo '!#/bin/bash' > /home/"+SUDOUSER+"/software.sh", shell=True)   
-        Popen("echo 'yay -S baobab ntfs-3g exfatprogs \\' >> /home/"+SUDOUSER+"/software.sh", shell=True) 
-        Popen("echo 'xarchiver gparted wine playonlinux xrdp \\' >> /home/"+SUDOUSER+"/software.sh", shell=True) 
-        Popen("echo 'discord visual-studio-code-bin \' >> /home/"+SUDOUSER+"/software.sh", shell=True) 
-        Popen("echo 'notion-app teamviewer telegram-desktop preload \\' >> /home/"+SUDOUSER+"/software.sh", shell=True) 
-        Popen("echo 'brave-bin exe-thumbnailer github-desktop-bin \\' >> /home/"+SUDOUSER+"/software.sh", shell=True) 
-        Popen("echo 'wps-office xorgxrdp gobject-introspection libdbusmenu-gtk2 \\' >> /home/"+SUDOUSER+"/software.sh", shell=True) 
-        Popen("echo 'libdbusmenu-glib libdbusmenu-gtk3 appmenu-gtk-module numix-gtk-theme \\' >> /home/"+SUDOUSER+"/software.sh", shell=True) 
-        Popen("echo 'numix-icon-theme-git numix-circle-icon-theme-git' >> /home/"+SUDOUSER+"/software.sh", shell=True) 
-        Popen("echo 'systemctl enable xrdp' >> /home/"+SUDOUSER+"/software.sh", shell=True) 
-        Popen("echo 'systemctl enable xrdp-sesman' >> /home/"+SUDOUSER+"/software.sh", shell=True) 
-        Popen("echo 'systemctl enable preload' >> /home/"+SUDOUSER+"/software.sh", shell=True) 
-        Popen("echo 'systemctl enable preload' >> /home/"+SUDOUSER+"/software.sh", shell=True) 
-        Popen('chown '+SUDOUSER+' /home/'+SUDOUSER+'/software.sh', shell=True)
+        with open('/etc/X11/Xwrapper.config', 'w') as f: f.write("allowed_users=anybody")
+        
+        call(f"touch /home/{SUDOUSER}/software.sh")
+        with open(f'/home/{SUDOUSER}/software.sh', 'w') as f: 
+            f.writelines([
+                "#!/bin/bash\n",
+                "yay -S baobab ntfs-3g exfatprogs \\\n",
+                "xarchiver gparted wine playonlinux xrdp \\\n",
+                "notion-app teamviewer preload  \\\n",
+                "brave-bin exe-thumbnailer github-desktop-bin \\\n",
+                "wps-office xorgxrdp gobject-introspection libdbusmenu-gtk2 \\\n",
+                "libdbusmenu-glib libdbusmenu-gtk3 appmenu-gtk-module numix-gtk-theme \\\n",
+                "numix-icon-theme-git numix-circle-icon-theme-git \\\n",
+                "systemctl enable xrdp \\\n",
+                "systemctl enable xrdp-sesman \\\n",
+                "systemctl enable preload \\\n"
+            ])
+        call(f"chown {SUDOUSER} /home/{SUDOUSER}/software.sh", shell=True)
+        call(f"chmod +x /home/{SUDOUSER}/software.sh", shell=True)
         printer("print",33); print(" ")
         print("=============== OK =============== \n")
         input(reader(15))
@@ -1037,7 +984,7 @@ def software() -> None:
 def finisher() -> None:
     
     utils.clear(); d.msgbox(reader(27),7,50)
-    Popen("rm -f /arch-setupper.py &> /dev/null", shell=True)
+    call("rm -f /arch-setupper.py &> /dev/null", shell=True)
     utils.clear(); printer("print", 34); exit(0)
     
 class utils:
@@ -1053,6 +1000,16 @@ class utils:
         finally:
             tcsetattr(fd, TCSADRAIN, oldSettings)
         return answer
+    
+    def live_tasker(cmd: str) -> int:
+        task = Popen(cmd, stdout=PIPE, stderr=PIPE, encoding='utf8', shell=True)
+        try:  
+            while task.poll() is None:
+                for line in task.stdout:
+                    task.stdout.flush()
+                    print(line.replace("\n", ""))
+            return task.poll()
+        except: return 1
     
     def spinning():
         while True:

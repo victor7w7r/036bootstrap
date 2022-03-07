@@ -7,14 +7,12 @@ fi
 
 rm /tmp/localestemp.sh* 2> /dev/null
 rm /tmp/hosttemp.sh* 2> /dev/null
-	
 LOCALESTEMP=/tmp/localestemp.sh.$$
 HOSTTEMP=/tmp/hosttemp.sh.$$
 
 XRDPTOGGLE=0; LANGUAGE=0
 
 function cleanup { rm $LOCALESTEMP; $HOSTTEMP; exit; }
-
 trap cleanup; SIGHUP SIGINT SIGTERM
 
 function core { clear; language; cover; sleep 1s; verify; packages; hostnamer 
@@ -135,9 +133,7 @@ function language {
 	echo "1) English"; echo "2) Espanol"
 	read -n 1 -r OPTION
 	case $OPTION in
-		1) LANGUAGE=1;;
-		2) LANGUAGE=2;;
-		*) exit 1;;
+		1) LANGUAGE=1;; 2) LANGUAGE=2;; *) exit 1;;
 	esac
 }
 
@@ -234,8 +230,7 @@ function verify {
 		dnf install dialog --assumeyes &> /dev/null
 	fi
 	
-	printer print 8
-	START=$(date +%s); CHARS="/-\|"
+	printer print 8ñ START=$(date +%s); CHARS="/-\|"
 
 	while [[ $(($(date +%s) - START)) -lt 2 ]]; do
 		for (( i=0; i<${#CHARS}; i++ )); do
@@ -267,11 +262,9 @@ function hostnamer {
 		hostnamectl set-hostname "${DATA}" 
 		return;;
     1) 
-        clear; exit 0  
-        return;;
+        clear; exit 0; return;;
     255) 
-        clear; exit 0
-        return;;
+        clear; exit 0; return;;
     esac
 	
 }
@@ -287,17 +280,13 @@ function localer {
 		--menu "$RES4" 12 50 4 \
 		Spanish/Español "es" \
 		English "us" 2>"${LOCALESTEMP}"
-
 	menuitem=$(<"${LOCALESTEMP}")
-
 	case $menuitem in
 		Spanish/Español) 
-			clear
-			localectl set-keymap es
+			clear; localectl set-keymap es
 			return;;
 		English) 
-			clear
-			localectl set-keymap us
+			clear; localectl set-keymap us
 			return;;
 		*) clear; exit 0;;
 	esac
@@ -316,7 +305,7 @@ function cockpit {
 
 function graphical {
 
-	RES1=$(reader 0); RES5=$(reader 4); RES6=$(reader 5); 
+	RES1=$(reader 0); RES5=$(reader 4); RES6=$(reader 5)
 	local LISTHOME=""
 	dialog --title "$RES5" --backtitle "036 Creative Studios" \
 		--yesno "$RES6" 7 60
@@ -343,7 +332,6 @@ function graphical {
 		echo " "
 		echo -e "=============== OK =============== \n" 
 		read -r -p "$RES1"
-
 	else
 		clear
 		echo -e "=============== EPEL =============== \n" 
@@ -351,7 +339,6 @@ function graphical {
 		echo " "
 		echo -e "=============== OK =============== \n" 
 		read -r -p "$RES1"
-
 	fi
 
 }
@@ -362,14 +349,10 @@ function drivers {
 	dialog --title "VMware" --backtitle "036 Creative Studios" \
 		--yesno "$RES7" 8 60
 	response=$?
-
 	if [ $response = 0 ]; then
-		clear
-		dnf install open-vm-tools open-vm-tools-desktop --assumeyes 
-	elif [ $response -eq 1 ]; then
-		clear; return 0
-	else
-		clear; return 0
+		clear; dnf install open-vm-tools open-vm-tools-desktop --assumeyes 
+	elif [ $response -eq 1 ]; then clear; return 0
+	else clear; return 0
 	fi
 
 }
@@ -380,9 +363,7 @@ function remote {
 
 	dialog --title "SSH" --backtitle "036 Creative Studios" \
 		--yesno "$RES8" 8 60
-
 	response=$?
-
 	if [ $response = 0 ]; then
 		clear; printer print 11
 		sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin yes/' \
@@ -462,7 +443,7 @@ function ohmyzsh {
 	LISTHOME=$(ls /home)
 	for HOME in $LISTHOME; do
 		echo '#!/bin/bash' > /home/"$HOME"/omz.sh
-		echo 'sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"' >> /home/"$HOME"/omz.sh
+		echo 'sh -c "$(wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"' >> /home/"$HOME"/omz.sh
 		echo 'sed -i -e "s/ZSH_THEME=.*/ZSH_THEME=\"pmcgee\"/" .zshrc' >> /home/"$HOME"/omz.sh
 		echo 'sed -i -e "/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true" .zshrc' >> /home/"$HOME"/omz.sh
 		echo 'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting' >> /home/"$HOME"/omz.sh
@@ -473,7 +454,7 @@ function ohmyzsh {
 	done
 
 	echo '#!/bin/bash' > /root/omz.sh
-	echo 'sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O -)"' >> /root/omz.sh
+	echo 'sh -c "$(wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O -)"' >> /root/omz.sh
 	echo 'sed -i -e "s/ZSH_THEME=.*/ZSH_THEME=\"pmcgee\"/" .zshrc' >> /root/omz.sh
 	echo 'sed -i -e "/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true" .zshrc' >> /root/omz.sh
 	echo 'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting' >> /root/omz.sh

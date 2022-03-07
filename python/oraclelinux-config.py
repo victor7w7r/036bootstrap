@@ -115,7 +115,7 @@ def language() -> None:
     
     global LANGUAGE
     
-    print("Bienvenido /  Welcome")
+    print("Bienvenido / Welcome")
     print("Please, choose your language / Por favor selecciona tu idioma")
     print("1) English"); print("2) Espanol")
     option: str = utils.char()
@@ -124,6 +124,7 @@ def language() -> None:
     else: exit(1)
 
 def cover() -> None:
+    
     utils.clear()
     print(r'''                                     `"~>v??*^;rikD&MNBQku*;`                                           ''')
     print(r'''                                `!{wQNWWWWWWWWWWWWWWWNWWWWWWNdi^`                                       ''')
@@ -183,7 +184,7 @@ def verify() -> None:
         utils.clear(); printer("error",15); exit(1)
     if not path.exists('/sys/firmware/efi'):
         utils.clear(); printer("error",1); exit(1)
-    if not (search("\"Oracle.* ",ORACLE)):
+    if not search("\"Oracle.* ",ORACLE):
         utils.clear(); printer("error",2); exit(1)
     if machine() != "x86_64":
         utils.clear(); printer("error",3); exit(1)
@@ -217,9 +218,9 @@ def packages() -> None:
 def hostnamer() -> None:
     
     response = d.inputbox(reader(1), 8, 80)
-    if(response[0] == "ok" ):
+    if response[0] == "ok":
         call("hostnamectl set-hostname " + response[1], shell=True)
-    elif(response[0] == "cancel" ): exit(0) 
+    elif response[0] == "cancel": exit(0) 
 
 def localer() -> None:
     
@@ -227,9 +228,9 @@ def localer() -> None:
     d.msgbox(reader(2),9,50)
     call("timedatectl set-timezone America/Guayaquil", shell=True)
     response = d.menu(reader(0), 15, 50, 4, choices)
-    if(response[0] == "ok" and response[1] == "Spanish/Español"):
+    if response[0] == "ok" and response[1] == "Spanish/Español":
         call("localectl set-keymap es", shell=True)
-    elif(response[0] == "ok" and response[1] == "English"):
+    elif response[0] == "ok" and response[1] == "English":
         call("localectl set-keymap us", shell=True)
     else: utils.clear(); exit(0)
     
@@ -277,6 +278,7 @@ def graphical() -> None:
         input(reader(0))
 
 def drivers() -> None:
+    
     utils.clear()
     if d.yesno(reader("6"),8,60) == d.OK :
         utils.clear()
@@ -320,6 +322,7 @@ def remote() -> None:
         input(reader(0))
 
 def kvm() -> None:
+    
     utils.clear()
     if d.yesno(reader(8),8,60) == d.OK:
         utils.clear()
@@ -342,14 +345,16 @@ def kvm() -> None:
     else: utils.clear(); return
         
 def ohmyzsh() -> None:
+    
     utils.clear()
     LISTHOME: list = Popen("ls /home", shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
-    print("=============== OMZ =============== \n" )
+    print("=============== OMZ =============== \n")
     for HOME in LISTHOME:
+        call(f"touch /home/{HOME}/omz.sh")
         with open(f'/home/{HOME}/omz.sh', 'w') as f: 
             f.writelines([
                 "#!/bin/bash\n",
-                'sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"\n',
+                'sh -c "$(wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"\n',
                 'sed -i -e \'s/ZSH_THEME=.*/ZSH_THEME=\\\"pmcgee\\\"/\' .zshrc\n',
                 "sed -i -e '/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true' .zshrc\n",
                 r"git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting",
@@ -360,7 +365,7 @@ def ohmyzsh() -> None:
                 ])
         call(f'chown {HOME} /home/{HOME}/omz.sh', shell=True)
         call(f'chmod +x /home/{HOME}/omz.sh', shell=True)
-        
+    call("touch /root/omz.sh'")
     with open('/root/omz.sh', 'w') as f: 
         f.writelines([
             "#!/bin/bash\n",
@@ -375,7 +380,7 @@ def ohmyzsh() -> None:
         ])
         
     call(f'chmod +x /root/omz.sh', shell=True)
-    
+
     printer("print",12)
 
     print(" ")

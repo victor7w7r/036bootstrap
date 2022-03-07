@@ -13,6 +13,7 @@ rm /tmp/localestemp.sh* 2> /dev/null
 rm /tmp/hosttemp.sh* 2> /dev/null
 rm /tmp/graphicaltemp.sh* 2> /dev/null
 rm /tmp/driverstemp.sh* 2> /dev/null
+rm /tmp/microcodetemp* 2> /dev/null
 
 DISKMENUTEMP=/tmp/diskmenutemp.sh.$$	
 DISKENVTEMP=/tmp/diskenvtemp.sh.$$	
@@ -22,9 +23,10 @@ LOCALESTEMP=/tmp/localestemp.sh.$$
 HOSTTEMP=/tmp/hosttemp.sh.$$
 GRAPHICALTEMP=/tmp/graphicaltemp.sh.$$
 DRIVERSTEMP=/tmp/driverstemp.sh.$$
+MICROCODETEMP=/tmp/microcodetemp.sh.$$
 
 function cleanup { rm $DISKENVTEMP; rm $DISKMENUTEMP; rm $ROOTPARTMENUTEMP; 
-	rm $SWAPPARTMENUTEMP; rm $LOCALESTEMP; $HOSTTEMP; $GRAPHICALTEMP; $DRIVERSTEMP; exit; }
+	rm $SWAPPARTMENUTEMP; rm $LOCALESTEMP; $HOSTTEMP; $GRAPHICALTEMP; $DRIVERSTEMP; $MICROCODETEMP; exit; }
 
 trap cleanup; SIGHUP SIGINT SIGTERM
 
@@ -34,8 +36,8 @@ EFIPART=""; SWAPPART=""
 SUDOUSER=""; LANGUAGE=0
 
 function corelive { clear; language; cover; sleep 1s; verify; diskenv; }
-function corechroot { configurator; hostnamer; localer; newuser; swapper; xanmod; 
-					graphical; drivers; aur; ohmyzsh; optimizations; software; finisher; }
+function corechroot { configurator; hostnamer; localer; newuser; liquorix; graphical
+					drivers; aur; swapper; ohmyzsh; optimizations; software; finisher; }
 
 function printer() {
 
@@ -173,6 +175,7 @@ function reader() {
 		"More Sofware!!"
 		"This script has a little pack of software, Do you like it?\n"
 		"READY!!!, Your PC is succesfully installed with Arch Linux, if you have errors, please report at 036bootstrap in GitHub"
+		"Choose your procesor"
 	)
 
 	local DICTIONARY_ESP=(
@@ -205,6 +208,7 @@ function reader() {
 		"Más Sofware!!"
 		"Este script tiene un pequeño pack de software, ¿Te gusta?\n"
 		"LISTO!!!, Tu PC ya instalo de manera correcta a Arch Linux, si hubo errores, repórtalo en 036bootstrap / GitHub"
+		"Elige tu procesador"
 	)
 
 	if [ "$LANGUAGE" -eq 1 ]; then
@@ -383,7 +387,7 @@ function disclaimer {
 	clear; dialog --msgbox "$RES5" 8 70
 
 	if [ "$DISKENVIRONMENT" == "HDD" ] ; then
-		dialog --msgbox "$RES6\n\n\
+		dialog --msgbox "$RES6\n\
 		GPT -> \n \
 		1.	/dev/sdX1	EFI			200MB		fat32		esp\n\
 		2.	/dev/sdX2	archlinux	>20GB		ext4		primary\n\
@@ -398,7 +402,7 @@ function disclaimer {
 		mkpart SWAP linux-swap 19.0GiB 100% \ \n" 20 70
 
 	elif [ "$DISKENVIRONMENT" == "SSD" ]; then
-		dialog --msgbox "$RES6\n\n\
+		dialog --msgbox "$RES6\n\
 		GPT -> \n \
 		1.	/dev/sdX1	EFI			200MB		fat32		esp\n\
 		2.	/dev/sdX2	archlinux	>20GB		f2fs/ext4		primary\n\
@@ -611,8 +615,8 @@ function diskformat() {
 			read -r -p "$RES16"; clear
 		fi
 		printer print 21; mkfs.fat -F32 "$EFIPART"
-		mount "$ROOTPART" /mnt; mkdir /mnt/efi
-		mount "$EFIPART" /mnt/efi
+		mount "$ROOTPART" /mnt; mkdir /mnt/boot/; mkdir /mnt/boot/efi
+		mount "$EFIPART" /mnt/boot/efi
 		echo " "
 		echo -e "=============== OK =============== \n" 
 		read -r -p "$RES16"; clear; pacstraper
@@ -637,9 +641,11 @@ function pacstraper {
 
 	RES16=$(reader 15); clear; printer print 23;
 
-	pacstrap /mnt base linux linux-firmware nano sudo vi vim git wget \
-	grub efibootmgr reflector os-prober rsync networkmanager neofetch \
-	openssh arch-install-scripts screen unrar p7zip zsh dialog
+	pacstrap /mnt base linux linux-firmware \
+	linux-headers nano sudo vi vim git wget \
+	grub efibootmgr reflector os-prober rsync \
+	networkmanager neofetch base-devel openssh \
+	arch-install-scripts screen unrar p7zip zsh dialog dosfstools
 
 	genfstab -U /mnt >> /mnt/etc/fstab
 
@@ -661,16 +667,42 @@ function toggler {
 
 function configurator {
 	
-	RES16=$(reader 15); clear; printer print 26; passwd
+	RES16=$(reader 15); RES29=$(reader 28) clear
+	printer print 26; passwd
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
 	read -r -p "$RES16"
 
+	dialog --clear --backtitle "036 Creative Studios" \
+		--title "Microcode" \
+		--menu "$RES29" 12 50 4 \
+		Intel "intel-ucode" \
+		AMD "amd-ucode" 2>"${MICROCODETEMP}"
+		menuitem=$(<"${MICROCODETEMP}")
+		case $menuitem in
+			Intel) 
+				clear
+				echo -e "=============== INTEL MICROCODE =============== \n" 
+				pacman -S intel-ucode --noconfirm
+				echo " "
+				echo -e "=============== OK =============== \n" 
+				read -r -p "$RES16";;
+			AMD) 
+				clear
+				echo -e "=============== AMD MICROCODE =============== \n" 
+				pacman -S amd-ucode --noconfirm
+				echo " "
+				echo -e "=============== OK =============== \n" 
+				read -r -p "$RES16";;
+
+			*) clear; exit 0;;
+		esac
+
 	clear; printer print 27
-	grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB
+	grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB
 	grub-mkconfig -o /boot/grub/grub.cfg
-	umount /efi
+	umount /boot/efi
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
@@ -679,8 +711,7 @@ function configurator {
 	clear; printer print 28 
 	systemctl enable NetworkManager
 	systemctl enable sshd
-	sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin yes/' \
-	/etc/ssh/sshd_config &> /dev/null
+	sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin yes/' /etc/ssh/sshd_config &> /dev/null
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
@@ -690,7 +721,7 @@ function configurator {
 
 function hostnamer {
 
-	RES17=$(reader 16); 
+	RES17=$(reader 16)
 
 	clear; dialog --title "Hostname" \
     --backtitle "036 Creative Studios" \
@@ -704,18 +735,16 @@ function hostnamer {
 		echo "127.0.1.1        ${DATA}" >> /etc/hosts
 		return;;
     1) 
-        clear; exit 0  
-        return;;
+        clear; exit 0; return;;
     255) 
-        clear; exit 0
-        return;;
+        clear; exit 0; return;;
     esac
 	
 }
 
 function localer {
 
-	clear; RES18=$(reader 17); RES19=$(reader 18); 
+	clear; RES18=$(reader 17); RES19=$(reader 18)
 
 	dialog --msgbox "$RES18" 9 50
 
@@ -727,9 +756,7 @@ function localer {
 		--menu "$RES19" 12 50 4 \
 		Spanish "es_ES" \
 		English "en_US" 2>"${LOCALESTEMP}"
-
 		menuitem=$(<"${LOCALESTEMP}")
-
 		case $menuitem in
 			Spanish) 
 				clear
@@ -759,48 +786,27 @@ function newuser {
 	read -r -p "$RES20" SUDOUSER
 	useradd --create-home "$SUDOUSER"
 	passwd "$SUDOUSER"
-	usermod -aG wheel "$SUDOUSER"
-	sed -i 's/^#.*%wheel ALL=(ALL) ALL$/%wheel ALL=(ALL) ALL/' /etc/sudoers &> /dev/null
+	usermod -aG wheel,storage,power "$SUDOUSER"
+	sed -i 's/^#.*%wheel ALL=(ALL:ALL) ALL$/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers &> /dev/null
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
 	read -r -p "$RES16"
 }
 
-function swapper {
+function liquorix {
 
 	clear; RES16=$(reader 15)
-	echo -e "=============== SWAPPING =============== \n" 
-
-	if [ $DISKENVIRONMENT == "HDD" ]; then
-		echo "vm.swappiness=60" >> /etc/sysctl.d/99-sysctl.conf
-	elif [ $DISKENVIRONMENT == "SSD" ]; then
-		dd if=/dev/zero of=/swapfile bs=1M count=1024 status=progress
-		chmod 600 /swapfile
-		mkswap /swapfile
-		swapon /swapfile
-		echo "swapfile none swap defaults 0 0" >> /etc/fstab
-		echo "vm.swappiness=1" >> /etc/sysctl.d/99-sysctl.conf
-	fi
-	
-	echo " "
-	echo -e "=============== OK =============== \n" 
-	read -r -p "$RES16"
-
-}
-
-function xanmod {
-
-	clear; RES16=$(reader 15)
-	echo -e "=============== XANMOD KERNEL =============== \n" 
+	echo -e "=============== LIQUORIX KERNEL =============== \n" 
 	
 	sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
 	sed -i 's/^SigLevel    = Required DatabaseOptional$/SigLevel = PackageOptional/' \
 		/etc/pacman.conf &> /dev/null
-	echo "[kernel]" >> /etc/pacman.conf
-	echo 'Server = https://repo.archlinuxrepo.dev/$arch/$repo' >> /etc/pacman.conf
-	pacman -Syyu linux-xanmod linux-xanmod-headers --noconfirm
-	pacman -R linux --noconfirm
+	echo "[liquorix]" >> /etc/pacman.conf
+	echo 'Server = https://liquorix.net/archlinux/$repo/$arch' >> /etc/pacman.conf
+
+	pacman -Syyu linux-lqx linux-lqx-headers --noconfirm
+	grub-mkconfig -o /boot/grub/grub.cfg
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
@@ -947,7 +953,7 @@ function aur {
 
 	clear; RES16=$(reader 15)
 	printer print 30;
-	pacman -S --needed base-devel fakeroot packer go --noconfirm
+	pacman -S --needed fakeroot packer go --noconfirm
 	sudo -u "$SUDOUSER" bash -c 'cd; git clone https://aur.archlinux.org/yay-bin.git'
 	sudo -u "$SUDOUSER" bash -c 'cd; cd yay-bin; makepkg -si'
 	sudo -u "$SUDOUSER" bash -c 'cd; rm -rf yay-bin'
@@ -957,21 +963,49 @@ function aur {
 
 }
 
+function swapper {
+
+	clear; RES16=$(reader 15)
+	echo -e "=============== SWAPPING =============== \n" 
+
+	if [ $DISKENVIRONMENT == "HDD" ]; then
+		echo "vm.swappiness=60" >> /etc/sysctl.d/99-sysctl.conf
+	elif [ $DISKENVIRONMENT == "SSD" ]; then
+		sudo -u "$SUDOUSER" bash -c 'yay -S zramswap'
+		systemctl enable zramswap.service
+	fi
+	
+	echo " "
+	echo -e "=============== OK =============== \n" 
+	read -r -p "$RES16"
+
+}
+
 function ohmyzsh {
 
 	clear; RES16=$(reader 15)
+
 	echo -e "=============== OMZ =============== \n" 
 	touch /home/"$SUDOUSER"/omz.sh
 	echo '#!/bin/bash' > /home/"$SUDOUSER"/omz.sh
-	echo 'sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"' >> /home/"$SUDOUSER"/omz.sh
+	echo 'sh -c "$(wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"' >> /home/"$SUDOUSER"/omz.sh
 	echo 'sed -i -e "s/ZSH_THEME=.*/ZSH_THEME=\"pmcgee\"/" .zshrc' >> /home/"$SUDOUSER"/omz.sh
 	echo 'sed -i -e "/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true" .zshrc' >> /home/"$SUDOUSER"/omz.sh
-	echo 'sudo ln -s "$HOME"/.zshrc /root/.zshrc' >> /home/"$SUDOUSER"/omz.sh
-	echo 'sudo ln -s "$HOME"/.oh-my-zsh /root/.oh-my-zsh' >> /home/"$SUDOUSER"/omz.sh
 	echo 'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting' >> /home/"$SUDOUSER"/omz.sh
 	echo 'git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions' >> /home/"$SUDOUSER"/omz.sh
 	echo 'sed -i -e "s/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/" .zshrc' >> /home/"$SUDOUSER"/omz.sh
 	chown "$SUDOUSER" /home/"$SUDOUSER"/omz.sh
+	chmod +x /home/"$SUDOUSER"/omz.sh
+
+	echo '#!/bin/bash' > /root/omz.sh
+	echo 'sh -c "$(wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O -)"' >> /root/omz.sh
+	echo 'sed -i -e "s/ZSH_THEME=.*/ZSH_THEME=\"pmcgee\"/" .zshrc' >> /root/omz.sh
+	echo 'sed -i -e "/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true" .zshrc' >> /root/omz.sh
+	echo 'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting' >> /root/omz.sh
+	echo 'git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions' >> /root/omz.sh
+	echo 'sed -i -e "s/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/" .zshrc' >> /root/omz.sh
+	chmod +x /root/omz.sh
+
 	printer print 31;
 	echo " "
 	echo -e "=============== OK =============== \n" 
@@ -1016,15 +1050,12 @@ function software {
 			-> playonlinux \n \
 			-> discord \n \
 			-> visual-studio-code-bin \n \
-			-> zerotier-gui-git \n \
-			-> notion-app \n \
 			-> teamviewer \n \
 			-> numix-gtk-theme-git\n \
 			-> numix-icon-theme \n \
-			-> telegram-desktop \n \
 			-> preload " 26 65
 
-	clear; response=$?
+	response=$?; clear
 
 	if [ $response -eq 0 ]; then
 		clear
@@ -1032,18 +1063,17 @@ function software {
 		touch /home/"$SUDOUSER"/software.sh
 		echo allowed_users=anybody > /etc/X11/Xwrapper.config
 		echo '!#/bin/bash' > /home/"$SUDOUSER"/software.sh
-		echo 'yay -S baobab ntfs-3g exfatprogs \' >> /home/"$SUDOUSER"/software.sh
-		echo 'xarchiver gparted wine playonlinux xrdp \' >> /home/"$SUDOUSER"/software.sh
+		echo 'yay -S baobab ntfs-3g exfat-utils \' >> /home/"$SUDOUSER"/software.sh
+		echo 'xarchiver gparted wine playonlinux \' >> /home/"$SUDOUSER"/software.sh
 		echo 'discord visual-studio-code-bin \' >> /home/"$SUDOUSER"/software.sh
-		echo 'notion-app teamviewer telegram-desktop preload \' >> /home/"$SUDOUSER"/software.sh
-		echo 'brave-bin exe-thumbnailer github-desktop-bin \' >> /home/"$SUDOUSER"/software.sh
+		echo 'teamviewer preload brave-bin \' >> /home/"$SUDOUSER"/software.sh
+		echo 'exe-thumbnailer github-desktop-bin \' >> /home/"$SUDOUSER"/software.sh
 		echo 'wps-office xorgxrdp gobject-introspection libdbusmenu-gtk2 \' >> /home/"$SUDOUSER"/software.sh
 		echo 'libdbusmenu-glib libdbusmenu-gtk3 appmenu-gtk-module numix-gtk-theme \' >> /home/"$SUDOUSER"/software.sh
 		echo 'numix-icon-theme-git numix-circle-icon-theme-git' >> /home/"$SUDOUSER"/software.sh
-		echo 'systemctl enable xrdp' >> /home/"$SUDOUSER"/software.sh
-		echo 'systemctl enable xrdp-sesman' >> /home/"$SUDOUSER"/software.sh
 		echo 'systemctl enable preload' >> /home/"$SUDOUSER"/software.sh
 		chown "$SUDOUSER" /home/"$SUDOUSER"/software.sh
+		chmod +x /home/"$SUDOUSER"/software.sh
 		printer print 33; echo " "
 		echo -e "=============== OK =============== \n" 
 		read -r -p "$RES16"
@@ -1075,3 +1105,4 @@ fi
 [ -f $HOSTTEMP ] && rm $HOSTTEMP
 [ -f $GRAPHICALTEMP ] && rm $GRAPHICALTEMP
 [ -f $DRIVERSTEMP ] && rm $DRIVERSTEMP
+[ -f $MICROCODETEMP ] && rm $MICROCODETEMP
