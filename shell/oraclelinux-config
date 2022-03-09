@@ -230,7 +230,7 @@ function verify {
 		dnf install dialog --assumeyes &> /dev/null
 	fi
 	
-	printer print 8ñ START=$(date +%s); CHARS="/-\|"
+	printer print 8; START=$(date +%s); CHARS="/-\|"
 
 	while [[ $(($(date +%s) - START)) -lt 2 ]]; do
 		for (( i=0; i<${#CHARS}; i++ )); do
