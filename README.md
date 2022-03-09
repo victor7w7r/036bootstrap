@@ -8,6 +8,7 @@ Bootstrap Scripts for Arch Linux/Debian and Oracle Linux Auto-Configuration Scri
 
 - Medium understanding of GNU/Linux
 - Some binaries, depending on the script
+- For Python scripts, you need Python 3.5 or above
 
 ## Getting Started
 
@@ -47,7 +48,17 @@ parted --script /dev/sda \
     set 1 esp on \
     primary f2fs 200MiB 100% \
     print
+```
 
+## Also Python?
+
+- I recommend to use python scripts, works at 100% similar than bash scripts, the performance in python is better
+- Static typing is enabled by default, please run your scripts with python3 only
+- Ubuntu rolling is not available and suitable for python, only shell 
+- Only one module is required, please install pythondialog locally
+
+```bash
+$ pip install pythondialog
 ```
 
 ## What About With Arch Linux Bootstrap
@@ -63,10 +74,22 @@ If you are use Arch Linux Live CD you must update the repositories and install g
 pacman -Sy
 pacman -S git
 git clone https://github.com/victor7w7r/036bootstrap/
-cd 036bootstrap
+cd ./036bootstrap/shell
 chmod +x arch-bootstraper
-./arch-bootstraper #(If you are not superuser, use with sudo)
+./arch-bootstraper # If you are not superuser, use with sudo
 ```
+
+If you are using python, please install python-pip and install pythondialog
+
+```bash
+pacman -Sy
+pacman -S git python-pip
+git clone https://github.com/victor7w7r/036bootstrap/
+cd ./python/036bootstrap
+pip install pythondialog
+python3 arch-bootstraper.py # If you are not superuser, use with sudo
+```
+
 
 If you need to change to another timezone, use this order
 
@@ -82,17 +105,14 @@ vi /etc/locale.gen
 locale-gen
 ```
 
-## What About With Debian Sid Bootstrap
+## What About With Ubuntu Rolling
 
 - :warning: **Please install this software**
   - This scripts works in all GNU/Linux distros but you need this binaries
     - `dialog debootstrap f2fs-tools`
 
-- :warning: **GRUB**
-  - In some times, GRUB not works, i have this problem for a long time in the past and i don't have any response of research for fix this problem.
-
-- :warning: **Sid Sid Sid**
-  - This script use Debian Sid repositories for install, at this moment, i didn't have problems with Sid packages while testing, but this repository is some unstable, if you have problems in system packages, wait some days and try to run the script again
+- :warning: **Devel Repositories**
+  - This script use Ubuntu Devel repositories for install, at this moment, i didn't have problems with devel packages while testing, but this repository is some unstable, if you have problems in system packages, wait some days and try to run the script again.
 
 You must update the repositories of your GNU/Linux distro and install git, like this (run as superuser)
 
@@ -100,9 +120,9 @@ You must update the repositories of your GNU/Linux distro and install git, like 
 apt update
 apt install git
 git clone https://github.com/victor7w7r/036bootstrap/
-cd 036bootstrap
-chmod +x sid-debootstraper
-./sid-debootstraper #(If you are not superuser, use with sudo)
+cd ./036bootstrap/shell
+chmod +x ubuntu-rollingdeb
+./ubuntu-rollingdeb #(If you are not superuser, use with sudo)
 ```
 
 If you want to change the locales and keyboard layout, use this commands
@@ -136,27 +156,29 @@ You must update the repositories like this and install git, like this (run as su
 dnf update -y
 dnf install git -y
 git clone https://github.com/victor7w7r/036bootstrap/
-cd 036bootstrap
+cd ./036bootstrap/shell
 chmod +x oraclelinux-config
 ./oraclelinux-config #(If you are not superuser, use with sudo)
 ```
 
-## Spanish Folder?
+:warning: For python please install these packages, and use like this
 
-I born and live in Ecuador, of course i made a spanish scripts version, sorry for my bad english. :blush:
+```bash
+dnf update -y
+dnf install git python39 python39-pip -y
+python3.9 -m pip install pythondialog
+git clone https://github.com/victor7w7r/036bootstrap/
+cd ./036bootstrap/python
+python3.9 oraclelinux-config.py
+```
 
 ## TODO
 
-- [ ] Debian Sid GRUB
 - [ ] Code Optimization
+- [ ] Fix Arch Linux NVME Install
 
 ## Development Suite
 
 - Editor: [vscode](https://code.visualstudio.com/)
 - Lint and Syntax Check: [ShellCheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck)
-- Operating System Tests: [Arch Linux ARM](https://archlinuxarm.org/)
-
-## Thanks at this repositories for code snippets
-
-- [Desktopify](https://github.com/wimpysworld/desktopify) (Convert Ubuntu Server for Raspberry Pi to a Desktop.)
-- [ZeroTierOne](https://github.com/zerotier/ZeroTierOne) (Free VPN)
+- Operating Systems for tests: [Arch Linux ARM](https://archlinuxarm.org/), [Kali Linux](https://www.kali.org/)

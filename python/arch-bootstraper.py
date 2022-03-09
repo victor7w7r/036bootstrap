@@ -30,16 +30,16 @@ def main() -> None:
             LANGUAGE = argv[3]
             corechroot(); return
         elif argv[1] == 'test':
-            DISKENVIRONMENT = "HDD"
+            DISKENVIRONMENT = 'SSD'
             LANGUAGE = 1
-            toggler(); return
+            toggler()
     
 def corelive() -> None: 
     utils.clear(); language(); cover(); verify(); diskenv(); disclaimer(); diskmenu()
 
 def corechroot() -> None:
-    configurator(); hostnamer(); localer(); newuser(); liquorix()
-    graphical(); drivers(); aur(); ohmyzsh(); swapper(); optimizations()
+    configurator(); hostnamer(); localer(); newuser(); graphical()
+    drivers(); aur(); ohmyzsh(); swapper(); optimizations()
     software(); finisher()
 
 def printer(type: str, position: int, additional: str = "") -> None:
@@ -77,7 +77,7 @@ def printer(type: str, position: int, additional: str = "") -> None:
         "=============== CONFIGURE GRUB =============== \n",
         "=============== START NETWORKMANAGER AND SSH SERVICES =============== \n",
         "=============== ADD A USER TO A SUDO GROUP =============== \n",
-        "=============== AUR (YAY ASKS YOU YOUR PASSWORD, PAY ATTENTION) ===============  \n",
+        "=============== AUR (CHAOTIC-AUR / XANMOD KERNEL) ===============  \n",
         "We create a script called omz.sh in your home directory, after reboot, use chmod +x at omz.sh",
         "=============== OPTIMIZATIONS =============== \n",
         "We create a script called software.sh in your home directory, after reboot, use chmod +x at software.sh",
@@ -117,7 +117,7 @@ def printer(type: str, position: int, additional: str = "") -> None:
 		"=============== CONFIGURAR GRUB =============== \n",
 		"=============== INICIAR NETWORKMANAGER Y SERVICIOS DE SSH =============== \n",
 		"=============== AGREGAR UN USUARIO DE SUDO =============== \n",
-		"=============== AUR (YAY PREGUNTA POR TU CONTRASEÑA, ESTATE ATENTO) ===============  \n",
+		"=============== AUR (CHAOTIC-AUR / XANMOD KERNEL) ===============  \n" ,
 		"Hemos creado un script llamado omz.sh en tu carpeta de home, después de reiniciar, usa chmod +x omz.sh",
 		"=============== OPTIMIZACIONES =============== \n",
 		"Hemos creado un script llamado software.sh en tu carpeta de home, después de reiniciar, usa chmod +x software.sh",
@@ -175,33 +175,33 @@ def reader(position: int) -> str:
 
     DICTIONARY_ESP=(
         "Entorno de Disco",
-		"Seleccione su tipo de disco para la instalación \n",
+		"Seleccione su tipo de disco para la instalacion \n",
 		"Disco Duro",
-		"Disco Sólido o NVMe",
-		"CUIDADO!!!: Tu dispositivo debe estar vacío y formateado, formatear siempre mata tus datos, POR FAVOR haz una copia antes de continuar", 
+		"Disco Solido o NVMe",
+		"CUIDADO!!!: Tu dispositivo debe estar vacio y formateado, formatear siempre mata tus datos, POR FAVOR haz una copia antes de continuar", 
 		"Antes de instalar, se recomienda que tu disco tenga esta tabla de particiones\n\n",
 		"GNU Parted script, es un ejemplo para un disco de 20GB\n\n",
 		"Elige un dispositivo",
 		"Elige un dispositivo para instalar",
-		"Partición de raíz",
-		"Por favor seleccione su partición de raíz \n",
+		"Partición de raiz",
+		"Por favor seleccione su partición de raiz \n",
 		"Seleccione la partición de swap",
 		"Por favor seleccione a swap partition \n",
 		"ZONA DE PELIBRO!!!",
 		"Estas particiones se van a formatear ¿Continuar? ",
 		"Presione Enter para continuar...",
 		"Por favor escriba su hostname (ej: A036-arch)",
-		"America/Guayaquil es el timezone por defecto, si quieres cambiarlo por algún otro, aquí está la orden\n\n ln -sf /usr/share/zoneinfo/REGION/CITY /etc/localtime",
+		"America/Guayaquil es el timezone por defecto, si quieres cambiarlo por algun otro, aquí está la orden\n\n ln -sf /usr/share/zoneinfo/REGION/CITY /etc/localtime",
 		"Elige tu Locale, si quieres cambiar a otros, revisa el README dentro del GitHub de este proyecto",
 		"Escribe tu nuevo usuario: ",
-		"Entorno Gráfico",
-		"Selecciona un GUI, estos son los más usados, Este script recomienda XFCE",
-		"Drivers de gráficos",
+		"Entorno Grafico",
+		"Selecciona un GUI, estos son los mas usados, Este script recomienda XFCE",
+		"Drivers de graficos",
 		"Elige tu controlador de GPU",
 		"Si ejecutas como invitado",
-		"Más Sofware!!",
-		"Este script tiene un pequeño pack de software, ¿Te gusta?\n",
-		"LISTO!!!, Tu PC ya instalo de manera correcta a Arch Linux, si hubo errores, repórtalo en 036bootstrap / GitHub",
+		"Mas Sofware!!",
+		"Este script tiene un pequeno pack de software, ¿Te gusta?\n",
+		"LISTO!!!, Tu PC ya instalo de manera correcta a Arch Linux, si hubo errores, reportalo en 036bootstrap / GitHub",
         "Elige tu procesador"
 	)
 
@@ -335,11 +335,9 @@ def diskenv() -> None:
     
 def disclaimer() -> None:
     
-    utils.clear()
-    d.msgbox(reader(4),8,70)
+    utils.clear(); d.msgbox(reader(4),8,70)
     
     if DISKENVIRONMENT == "HDD":
-    
         d.msgbox(reader(5)+f"""
             GPT ->
             1.	/dev/sdX1	EFI			200MB		fat32		esp
@@ -353,7 +351,6 @@ def disclaimer() -> None:
             mkpart SWAP linux-swap 19.0GiB 100%""",20,70)
     
     elif DISKENVIRONMENT == "SSD":
-
         d.msgbox(reader(5)+f"""
             GPT ->
             1.	/dev/sdX1	EFI			200MB		fat32		esp
@@ -416,7 +413,7 @@ def diskverify(device: str) -> None:
         
         DISK = device; rootpartmenu()
         
-    elif(search("nvme[0-9_-]",device)):
+    elif search("nvme[0-9_-]",device):
         EFI = Popen(f"fdisk -l {device} | sed -ne '/EFI/p'", 
                         shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
         EFIORDER = Popen(f"echo {EFI} | sed -ne '/[[:alpha:]]1/p'",
@@ -468,7 +465,6 @@ def diskmenu() -> None:
         MODEL: str = Popen(f'cat /sys/class/block/{BLOCKSTAT}/device/model',
                     shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip()
         ARRAY.append([DEVICE, MODEL + " " + SIZE]); COUNT +=1
-        
 
     response = d.menu(reader(8), 15, 50, 4, ARRAY)
     if(response[0] == "ok"): diskverify(response[1])
@@ -569,9 +565,9 @@ def diskformat(temp: str) -> None:
         else: utils.clear(); exit(0)
     elif DISKENVIRONMENT == "SSD":
         if d.yesno(reader(14)+"\n"+EFIPART+" (EFI) \n "+ROOTPART+" (ROOT)",7,60) == d.OK:
-            utils.clear();
+            utils.clear()
             printer("print",20)
-            system(f"mkfs.f2fs {ROOTPART}")
+            system(f"mkfs.f2fs -f {ROOTPART}")
             print(" ")
             print("=============== OK =============== \n")
             input(reader(15))
@@ -589,9 +585,12 @@ def diskformat(temp: str) -> None:
 def pacstraper() -> None:
     
     utils.clear(); printer("print",23)
+    
+    system("reflector --verbose --latest 5 --sort rate --save /etc/pacman.d/mirrorlist &> /dev/null")
+    
     system("""
             pacstrap /mnt base linux linux-firmware nano sudo vi vim git wget \
-            grub efibootmgr reflector os-prober rsync networkmanager neofetch f2fs-tools\
+            grub efibootmgr reflector os-prober rsync networkmanager neofetch f2fs-tools \
             openssh arch-install-scripts screen unrar p7zip zsh dialog python python-pip""")
     
     system("genfstab -U /mnt >> /mnt/etc/fstab")
@@ -610,15 +609,8 @@ def toggler() -> None:
     system(f"arch-chroot /mnt pip install pythondialog")
     system(f"arch-chroot /mnt python /setup.py chroot {DISKENVIRONMENT} {LANGUAGE}")
     
-    if path.isfile('/mnt/setup.py'):
-        printer("error",24); printer("print",25); exit(1)
-        
-    if DISKENVIRONMENT == "HDD":
-        system(f"umount {ROOTPART}; swapoff {SWAPPART}")
-    elif DISKENVIRONMENT == "SSD":
-        system(f"umount {ROOTPART}")
-    printer("print",22); exit(0)
-    
+    printer("print",25)
+    system("rm -f /arch-setupper.py &> /dev/null")
 
 def configurator() -> None:
     
@@ -674,11 +666,11 @@ def hostnamer() -> None:
     elif response[0] == "cancel" : exit(0)
     
 def localer() -> None:
-    utils.clear(); d.msgbox(reader(17))
+    utils.clear(); d.msgbox(reader(17),9,50)
     system("ln -sf /usr/share/zoneinfo/America/Guayaquil /etc/localtime")
     system("hwclock --systohc")
 
-    choices = [("Spanish/Español","es_ES"),("English","en_US")]
+    choices = [("Spanish/Espanol","es_ES"),("English","en_US")]
     response = d.menu(reader(18), 12, 50, 4, choices)
     if response[0] == "ok" and response[1] == "Spanish/Español":
         utils.clear()
@@ -718,23 +710,6 @@ def newuser() -> None:
     print("=============== OK =============== \n")
     input(reader(15))
 
-def liquorix() -> None:
-    
-    utils.clear()
-    print( "=============== LIQUORIX KERNEL =============== \n" )
-    system("sed -i \"/\[multilib\]/,/Include/\"'s/^#//' /etc/pacman.conf")
-    system("sed -i 's/^SigLevel    = Required DatabaseOptional$/SigLevel = PackageOptional/' /etc/pacman.conf &> /dev/null")
-    with open('/etc/pacman.conf', 'a') as f: 
-        f.writelines([
-            '[kernel]\n',
-            'Server = https://repo.archlinuxrepo.dev/$arch/$repo'
-        ])
-    system("pacman -Syyu linux-lqx linux-lqx-headers --noconfirm")
-    system("grub-mkconfig -o /boot/grub/grub.cfg")
-    print(" ")
-    print("=============== OK =============== \n")
-    input(reader(15))
-    
 def graphical() -> None:
     
     utils.clear()
@@ -811,6 +786,7 @@ def graphical() -> None:
     else: exit(0)
     
 def drivers() -> None:
+    
     utils.clear()
     choices = [
         ("Intel","Intel Graphics"),
@@ -825,7 +801,7 @@ def drivers() -> None:
         utils.clear()
         print("=============== INTEL =============== \n")
 
-        system("pacman -S xf86-video-intel intem-media-driver intel-media-sdk lib32-mesa --noconfirm")
+        system("pacman -S xf86-video-intel intel-media-driver intel-media-sdk lib32-mesa --noconfirm")
 
         print(" ")
         print("=============== OK =============== \n")
@@ -869,14 +845,20 @@ def drivers() -> None:
         input(reader(15))    
     
 def aur() -> None:
+    
     utils.clear(); printer("print",30)
 
-    system("pacman -S --needed base-devel fakeroot packer go --noconfirm")
-    
-    system(f"sudo -u {SUDOUSER} bash -c 'cd; git clone https://aur.archlinux.org/yay-bin.git'")    
-    system(f"sudo -u {SUDOUSER} bash -c 'cd; cd yay-bin; makepkg -si'") 
-    system(f"sudo -u {SUDOUSER} bash -c 'cd; rm -rf yay-bin'") 
-    
+    system("pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com")
+    system("pacman-key --lsign-key FBA220DFC880C036")
+    system("pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' --noconfirm")
+    system("sed -i \"/\[multilib\]/,/Include/\"'s/^#//' /etc/pacman.conf")
+    with open('/etc/pacman.conf', 'a') as f: 
+        f.writelines([
+            '[chaotic-aur]\n',
+            'Include = /etc/pacman.d/chaotic-mirrorlist'
+        ])
+    system("pacman -Syyu yay powerpill linux-xanmod-anbox linux-xanmod-anbox-headers --noconfirm")
+    system("grub-mkconfig -o /boot/grub/grub.cfg")
     print(" ")
     print("=============== OK =============== \n")
     input(reader(15))
@@ -902,7 +884,6 @@ def ohmyzsh() -> None:
     utils.clear()
     print("=============== OMZ =============== \n")
     system(f"touch /home/{SUDOUSER}/omz.sh")
-    
     with open(f'/home/{SUDOUSER}/omz.sh', 'w') as f: 
         f.writelines([
             "#!/bin/bash\n",
@@ -1000,7 +981,6 @@ def software() -> None:
 def finisher() -> None:
     
     utils.clear(); d.msgbox(reader(27),7,50)
-    system("rm -f /arch-setupper.py &> /dev/null")
     utils.clear(); printer("print", 34); system("exit"); exit(0)
     
 class utils:

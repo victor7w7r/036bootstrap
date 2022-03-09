@@ -34,14 +34,14 @@ EFIPART=""; SWAPPART=""
 SUDOUSER=""; LANGUAGE=0
 
 function corelive { clear; language; cover; sleep 1s; verify; diskenv; }
-function corechroot { debian; configurator; hostnamer; localer; newuser; swapper; 
-					xanmod; graphical; ohmyzsh; optimizations; software; finisher; }
+function corechroot { ubuntu_core; configurator; hostnamer; localer; newuser; swapper; 
+					xanmod; graphical; rolling; ohmyzsh; optimizations; software; finisher; }
 
 function printer() {
 
     local RED="\e[31m"; local GREEN="\e[32m"; local YELLOW="\e[33m"
     local RESET="\e[0m"; local MESSAGE_TYPE=""; local MESSAGE=""
-    MESSAGE_TYPE="${1}"; POSITION="${2}"; ADDITIONAL="${3}";
+    MESSAGE_TYPE="${1}"; POSITION="${2}"; ADDITIONAL="${3}"
 
 	local DICTIONARY_ENG=(
 		"Your Operating System is not GNU/Linux, exiting"
@@ -63,8 +63,8 @@ function printer() {
 		"=============== FORMAT ROOT FILESYSTEM =============== \n" 
 		"=============== FORMAT EFI AND MOUNT =============== \n" 
 		"unmounted filesystems succesfully"
-		"=============== DEBOOTSTRAP: INSTALL DEBIAN SID CORE =============== \n" 
-		"=============== DEBIAN: UPDATE SID REPOSITORIES =============== \n" 	
+		"=============== DEBOOTSTRAP: INSTALL UBUNTU CORE =============== \n" 
+		"=============== UBUNTU: UPDATE LATEST REPOSITORIES =============== \n" 	
 		"=============== INSTALL CORE PACKAGES =============== \n" 	
 		"=============== GENERATE FSTAB AND ROOT PASSWORD FOR YOUR SYSTEM =============== \n" 
 		"=============== CONFIGURE GRUB =============== \n" 
@@ -72,7 +72,7 @@ function printer() {
 		"=============== ADD A USER TO A SUDO GROUP =============== \n" 
 		"We create a script called omz.sh in your home directory, after reboot, use chmod +x at omz.sh"
 		"=============== OPTIMIZATIONS =============== \n" 
-		"Please reboot and remove your live media"
+		"Your system is ready, please reboot for boot"
 
 	)
 
@@ -96,16 +96,16 @@ function printer() {
 		"=============== FORMATEAR PARTICION DE RAIZ =============== \n" 
 		"=============== FORMATEAR EFI Y MONTARLO =============== \n" 
 		"Particiones desmontadas de manera exitosa"
-		"=============== DEBOOTSTRAP: INSTALAR LA BASE DE DEBIAN SID =============== \n" 
-		"=============== DEBIAN: ACTUALIZAR REPOSITORIOS DE SID =============== \n" 	
+		"=============== DEBOOTSTRAP: INSTALAR LA BASE DE UBUNTU =============== \n" 
+		"=============== UBUNTU: ACTUALIZAR A LOS ÚLTIMOS REPOSITORIOS =============== \n" 	
 		"=============== INSTALAR PAQUETES BASE =============== \n" 
-		"=============== GENERAR FSTAB Y ONTRASEÑA DE ROOT PARA EL SISTEMA =============== \n" 
+		"=============== GENERAR FSTAB Y CONTRASEÑA DE ROOT PARA EL SISTEMA =============== \n" 
 		"=============== CONFIGURAR GRUB =============== \n" 
 		"=============== INICIAR NETWORKMANAGER Y SERVICIOS DE SSH =============== \n" 
 		"=============== AGREGAR UN USUARIO DE SUDO =============== \n" 
 		"Hemos creado un script llamado omz.sh en tu carpeta de home, después de reiniciar, usa chmod +x omz.sh"
 		"=============== OPTIMIZACIONES =============== \n" 
-		"Por favor reinicia y quita tu medio de live"
+		"Por favor reinicia para ver los cambios"
 	)
 
 	if [ "$LANGUAGE" -eq 1 ]; then
@@ -340,30 +340,28 @@ function diskenv {
 function disclaimer {
 
 	RES5=$(reader 4); RES6=$(reader 5); RES7=$(reader 6)
-
-	clear
-	dialog --msgbox "$RES5" 8 70
+	clear; dialog --msgbox "$RES5" 8 70
 
 	if [ "$DISKENVIRONMENT" == "HDD" ] ; then
-		dialog --msgbox "$RES6\n\n\
+		dialog --msgbox "$RES6\n\
 		GPT -> \n \
 		1.	/dev/sdX1	EFI			200MB		fat32		esp\n\
-		2.	/dev/sdX2	debian  	>20GB		ext4		primary\n\
+		2.	/dev/sdX2	ubuntu  	>20GB		ext4		primary\n\
 		3.	/dev/sdx3	linux-swap	2GB-4GB		swap		primary\n\n\
 
-		$RES7 \
+		\n\n$RES7 \
 
 		mklabel gpt \ \n \
 		mkpart EFI fat32 1MiB 200MiB \ \n \
 		set 1 esp on \ \n \
 		mkpart ROOT ext4 200MiB 19.0GiB \ \n \
-		mkpart SWAP linux-swap 19.0GiB 100% \ \n" 20 70
+		mkpart SWAP linux-swap 19.0GiB 100% \n" 20 70
 
 	elif [ "$DISKENVIRONMENT" == "SSD" ]; then
 	dialog --msgbox "$RES6\n\n\
 		GPT -> \n \
 		1.	/dev/sdX1	EFI			200MB		fat32		esp\n\
-		2.	/dev/sdX2	debian	>20GB		f2fs/ext4		primary\n\
+		2.	/dev/sdX2	ubuntu	   >20GB		f2fs/ext4		primary\n\
 
 		$RES7 \
 
@@ -380,36 +378,27 @@ function diskverify() {
 
 	clear
 	LABEL=$(blkid -o value -s PTTYPE "$1")
-	local EFI=""; local EFIORDER=""; local BLOCK=""
+	EFI=""; EFIORDER=""; BLOCK=""
 
-	if [ "$LABEL" == "dos" ]; then
-		clear; printer error 8; exit 1;
-	fi
-
+	if [ "$LABEL" == "dos" ]; then clear; printer error 8; exit 1; fi
 	if [[ $1 =~ sd[[:alpha:]] ]]; then
-
 		EFI=$(fdisk -l "$1" | sed -ne '/EFI/p')
 		EFIORDER=$(echo "$EFI" | sed -ne '/[[:alpha:]]1/p' )
-
 		if [ "$DISKENVIRONMENT" == "SSD" ]; then
 			BLOCK=$(echo "$1" | cut -d "/" -f3)
 			ROTATIONAL="$(cat /sys/block/"$BLOCK"/queue/rotational)"
 			if [ "$ROTATIONAL" == "1" ]; then clear; printer error 9; exit 1; fi
-
 		elif [ "$DISKENVIRONMENT" == "HDD" ]; then
 			BLOCK=$(echo "$1" | cut -d "/" -f3)
 			ROTATIONAL="$(cat /sys/block/"$BLOCK"/queue/rotational)"
 			if  [ "$ROTATIONAL" == "0" ]; then clear; printer error 10; exit 1; fi
 		fi
-
 		if [ "$EFI" == "" ]; then clear; printer error 11; exit 1; fi
 		if [ "$EFIORDER" == "" ]; then clear; printer error 12 "$1"; fi
 
-		DISK=$1
-		rootpartmenu
+		DISK=$1; rootpartmenu
 
 	elif [[ $1 =~ mmcblk[[:digit:]] ]]; then
-
 		EFI=$(fdisk -l "$1" | sed -ne '/EFI/p')
 		EFIORDER=$(echo "$EFI" | sed -ne '/p1/p' )
 		if [ "$DISKENVIRONMENT" == "HDD" ]; then clear; printer error 10; exit 1; fi
@@ -417,28 +406,22 @@ function diskverify() {
 		if [ "$EFIORDER" == "" ]; then clear; printer error 12 "$1"; fi
 		DISK=$1
 		rootpartmenu
-
 	elif [[ $1 =~ nvme[[:digit:]] ]]; then
-
 		EFI=$(fdisk -l "$1" | sed -ne '/EFI/p')
 		EFIORDER=$(echo "$EFI" | sed -ne '/p1/p' )
 		if [ "$DISKENVIRONMENT" == "HDD" ]; then clear; printer error 10; exit 1; fi
 		if [ "$EFI" == "" ]; then clear; printer error 11; exit 1; fi
 		if [ "$EFIORDER" == "" ]; then clear; printer error 12 "$1"; fi
-		DISK=$1
-		rootpartmenu
-
+		DISK=$1; rootpartmenu
 	fi
 
 }
 
 function diskmenu {
 
-	clear
+	clear; RES8=$(reader 7); RES9=$(reader 8)
 	local COUNT=0; local BLOCK=(); local DIRTYDEVS=()
 	local MODEL=0; local DEVICE=0; local ARRAY=()
-
-	RES8=$(reader 7); RES9=$(reader 8)
 
 	DEVICES=$(find /dev/disk/by-path/ | sed 's/^\/dev\/disk\/by-path\///')
 
@@ -485,10 +468,9 @@ function diskmenu {
 function rootpartmenu {
 
 	clear; RES10=$(reader 9); RES11=$(reader 10)
-
-	local VERIFY=""; local TYPE=""; local COUNT=0
-	local COUNTMOUNT=0; local ISMOUNTED=0
-	local ROOTPARTS=()
+	local VERIFY=""; local TYPE=""
+	local COUNT=0; local COUNTMOUNT=0
+	local ISMOUNTED=""; local ROOTPARTS=()
 
 	EFIPART=$(fdisk -l "$DISK" | sed -ne /EFI/p | cut -d " " -f1)
 
@@ -526,15 +508,11 @@ function rootpartmenu {
 
 function swapmenu() {
 
-	clear; RES12=$(reader 11); RES13=$(reader 12)
 	if [ "$1" == "" ]; then clear; exit 0; fi
-
+	clear; RES12=$(reader 11); RES13=$(reader 12)
 	if [ $DISKENVIRONMENT == "HDD" ]; then
-
 		VERIFY=""; TYPE=""; COUNT=0
-		COUNTMOUNT=0; ISMOUNTED=0
-		SWAPPARTS=()
-
+		COUNTMOUNT=0; ISMOUNTED=0; SWAPPARTS=()
 		if [[ $DISK =~ sd[[:alpha:]] ]]; then
 			VERIFY=$(find "$DISK"* | sed '/[[:alpha:]]$/d')
 		elif [[ $DISK =~ mmcblk[[:digit:]] ]]; then
@@ -542,7 +520,6 @@ function swapmenu() {
 		elif [[ $DISK =~ nvme[[:alpha:]] ]]; then
 			VERIFY=$(find "$DISK"* | sed '/e[[:digit:]]$/d')
 		fi
-
 		for PART in $VERIFY; do
 			if [ "$PART" != "$EFIPART" ]; then
 				if [ "$PART" != "$ROOTPART" ]; then
@@ -556,12 +533,9 @@ function swapmenu() {
 				fi
 			fi
 		done
-
 	if [ "$COUNTMOUNT" -eq $COUNT ]; then printer error 14; exit 1; fi
-
 		dialog --clear --backtitle "036 Creative Studios" --title "$RES12" \
 			--menu "$RES13" 15 50 4 "${SWAPPARTS[@]}" 2>"${SWAPPARTMENUTEMP}"
-
 		CHOICE=$(<"${SWAPPARTMENUTEMP}")
 		case $CHOICE in
 			"$CHOICE") SWAPPART="$CHOICE"; diskformat "$CHOICE" ;;
@@ -579,7 +553,6 @@ function diskformat {
 	if [ "$1" == "" ]; then clear; exit 0; fi
 	clear; RES14=$(reader 13); RES15=$(reader 14)
 	RES16=$(reader 15)
-
 	if [ $DISKENVIRONMENT == "HDD" ]; then
 		dialog --title "$RES14" --backtitle "036 Creative Studios" \
 			--yesno "$RES15 $EFIPART (EFI) \n$ROOTPART (ROOT) \n$SWAPPART (SWAP)" 8 60
@@ -588,65 +561,44 @@ function diskformat {
 			--yesno "$RES15 $EFIPART (EFI) \n$ROOTPART (ROOT)" 7 60
 	fi
 	clear; response=$?
-
 	if [ $response = 0 ]; then
 		if [ $DISKENVIRONMENT == "HDD" ]; then
 			printer print 15; mkfs.ext4 "$ROOTPART"
 			mkswap "$SWAPPART"; swapon "$SWAPPART"
 			echo " "
 			echo -e "=============== OK =============== \n" 
-			read -r -p "$RES16"
-			clear
+			read -r -p "$RES16"; clear
 		elif [ $DISKENVIRONMENT == "SSD" ]; then
 			printer print 16; mkfs.f2fs -f "$ROOTPART"
 			echo " "
 			echo -e "=============== OK =============== \n" 
-			read -r -p "$RES16"
-			clear
+			read -r -p "$RES16"; clear
 		fi
-
 		printer print 17; mkfs.fat -F32 "$EFIPART"
-		mount "$ROOTPART" /mnt; mkdir /mnt/boot
-		mkdir /mnt/boot/efi; mount "$EFIPART" /mnt/boot/efi
-
+		mount "$ROOTPART" /mnt; mkdir /mnt/boot; mkdir /mnt/boot/efi
+		mount "$EFIPART" /mnt/boot/efi
 		echo " "
 		echo -e "=============== OK =============== \n" 
-		read -r -p "$RES16"
-		clear; debootstraper
+		read -r -p "$RES16"; clear; debootstraper
 
-
-	elif [ $response -eq 1 ] || [ $response -eq 255 ]; then
-		clear; exit 0
-	else
-		clear; exit 0
+	elif [ $response -eq 1 ] ; then clear; exit 0
+	else clear; exit 0
 	fi
 	
-}
-
-function unmounter {
-	clear
-	if [ $DISKENVIRONMENT == "HDD" ]; then
-		umount /mnt/proc/
-		umount /mnt/sys/
-		umount /mnt/dev/
-		umount "$ROOTPART"
-		swapoff "$SWAPPART"
-	elif [ $DISKENVIRONMENT == "SSD" ]; then
-		umount /mnt/proc/
-		umount /mnt/sys/
-		umount /mnt/dev/
-		umount "$ROOTPART"
-	fi
-	printer print 18; exit 0
 }
 
 function debootstraper {
 
 	clear; RES16=$(reader 15); printer print 19; 
-	debootstrap --arch amd64 sid /mnt https://deb.debian.org/debian/
-    mount -t proc /proc /mnt/proc/
-    mount -t sysfs /sys /mnt/sys/
-    mount -o bind /dev /mnt/dev/
+	debootstrap --arch amd64 jammy /mnt http://archive.ubuntu.com/ubuntu
+	mount --types proc /proc /mnt/proc
+	mount --rbind /sys /mnt/sys
+	mount --make-rslave /mnt/sys
+	mount --rbind /dev /mnt/dev
+	mount --make-rslave /mnt/dev
+	test -L /dev/shm && rm /dev/shm && mkdir /dev/shm
+	mount --types tmpfs --options nosuid,nodev,noexec shm /dev/shm
+	chmod 1777 /dev/shm
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
@@ -657,16 +609,30 @@ function toggler {
 
 	cp "$0" /mnt/deb-setupper.sh
     chroot /mnt /bin/bash ./deb-setupper.sh chroot $DISKENVIRONMENT "$EFIPART" "$ROOTPART" "$SWAPPART" $LANGUAGE
-	unmounter
+	
 	exit 0
 }
 
-function debian {
+function ubuntu_core {
 
 	clear; RES16=$(reader 15); printer print 20; 
 
-	echo "deb http://deb.debian.org/debian sid main contrib non-free" > /etc/apt/sources.list
-	echo "deb-src http://deb.debian.org/debian sid main contrib non-free" >> /etc/apt/sources.list
+	source /etc/profile
+	export PS1="(chroot) ${PS1}"
+	export TERM=xterm-color
+	export LANG=C.UTF-8
+	export PATH=$PATH:/usr/sbin
+
+	echo 'deb http://archive.ubuntu.com/ubuntu/ jammy main restricted' > /etc/apt/sources.list
+	echo 'deb http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted' >> /etc/apt/sources.list
+	echo 'deb http://archive.ubuntu.com/ubuntu/ jammy universe' >> /etc/apt/sources.list
+	echo 'deb http://archive.ubuntu.com/ubuntu/ jammy-updates universe' >> /etc/apt/sources.list
+	echo 'deb http://archive.ubuntu.com/ubuntu/ jammy multiverse' >> /etc/apt/sources.list
+	echo 'deb http://archive.ubuntu.com/ubuntu/ jammy-updates multiverse' >> /etc/apt/sources.list
+	echo 'deb http://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse' >> /etc/apt/sources.list
+	echo 'deb http://security.ubuntu.com/ubuntu jammy-security main restricted' >> /etc/apt/sources.list
+	echo 'deb http://security.ubuntu.com/ubuntu jammy-security universe' >> /etc/apt/sources.list
+	echo 'deb http://security.ubuntu.com/ubuntu jammy-security multiverse' >> /etc/apt/sources.list
 
 	apt update
 
@@ -675,10 +641,9 @@ function debian {
 	read -r -p "$RES16"
 	clear; printer print 21 
 
-	apt install -y sudo locales git wget aptitude grub-efi-amd64 vim \
-		grub-efi efibootmgr net-tools network-manager-gnome dialog \
-		openssh-server python rsync screen unrar p7zip zsh linux-image-amd64 \
-		firmware-linux firmware-linux-free firmware-linux-nonfree util-linux gnupg
+	apt install -y git wget nano vim aptitude tasksel zsh rsync openssh-server \
+		grub-efi os-prober net-tools network-manager screen unrar python-pip \
+		p7zip linux-image-generic gnupg efivar dosfstools ntfs-3g f2fs-tools dialog
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
@@ -710,8 +675,10 @@ function configurator {
 
 	elif [ $DISKENVIRONMENT == "SSD" ]; then
 		{
-			echo "UUID=$SDA2          /             f2fs      discard               1      1"
+			echo "UUID=$SDA2          /             f2fs      noatime,discard               1      1"
 			echo "UUID=$SDA1          /boot/efi     		vfat      defaults              0      0"
+			echo "tmpfs    /tmp    tmpfs    noatime,nodiratime,nodev,nosuid,mode=1777,defaults    0    0"
+			echo "tmpfs    /var/tmp    tmpfs    noatime,nodiratime,nodev,nosuid,mode=1777,defaults    0    0"
 		} > /etc/fstab
 	fi
 
@@ -723,11 +690,10 @@ function configurator {
 
 	clear; printer print 23
 
-	/usr/sbin/grub-install --target=x86_64-efi \
-		--boot-directory=/boot --efi-directory=/boot/efi --bootloader-id=GRUB
-	/usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg
-	umount /boot/efi
-
+	grub-install --boot-directory=/boot --bootloader-id=ubuntu \
+		--target=x86_64-efi --efi-directory=/boot/efi 
+	update-grub
+	umount /boot/efi &> /dev/null
 	echo " "
 	echo -e "=============== OK =============== \n" 
 	read -r -p "$RES16"
@@ -736,7 +702,7 @@ function configurator {
 
 	systemctl enable NetworkManager &> /dev/null
 	systemctl enable ssh &> /dev/null
-	sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin Yes/' \
+	sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin yes/' \
 		/etc/ssh/sshd_config &> /dev/null
 	echo -e "=============== OK =============== \n" 
 	read -r -p "$RES16"
@@ -758,11 +724,9 @@ function hostnamer {
 		echo "127.0.1.1        ${DATA}" >> /etc/hosts
 		return;;
     1) 
-        clear; exit 0  
-        return;;
+        clear; exit 0; return;;
     255) 
-        clear; exit 0
-        return;;
+        clear; exit 0; return;;
     esac
 	
 }
@@ -787,6 +751,7 @@ function localer {
 		Spanish) 
 			clear
 			sed -i 's/^# es_ES.UTF-8 UTF-8/es_ES.UTF-8 UTF-8/' /etc/locale.gen &> /dev/null
+			locale-gen
 			echo 'LANG="es_ES.UTF-8"' > /etc/default/locale
 			echo 'LC_TIME="es_ES.UTF-8"' >> /etc/default/locale
 			echo 'LANGUAGE="es_EC:es_ES:es"' >> /etc/default/locale
@@ -809,8 +774,8 @@ function newuser {
 	RES16=$(reader 15); RES21=$(reader 20)
 
 	read -r -p "$RES21" SUDOUSER
-	/usr/sbin/adduser "$SUDOUSER"
-	/usr/sbin/usermod -aG sudo "$SUDOUSER"
+	adduser "$SUDOUSER"
+	usermod -aG sudo "$SUDOUSER"
 
 	echo " "
 	echo -e "=============== OK =============== \n" 
@@ -825,12 +790,12 @@ function swapper {
 	if [ $DISKENVIRONMENT == "HDD" ]; then
 		echo "vm.swappiness=60" >> /etc/sysctl.conf
 	elif [ $DISKENVIRONMENT == "SSD" ]; then
-		dd if=/dev/zero of=/swapfile bs=1M count=1024 status=progress
-		chmod 600 /swapfile
-		mkswap /swapfile
-		swapon /swapfile
-		echo "swapfile none swap defaults 0 0" >> /etc/fstab
-		echo "vm.swappiness=1" >> /etc/sysctl.conf
+		apt -y install zram-tools
+		echo 'PERCENT=50' >> /etc/default/zramswap
+		echo 'SIZE=2048' >> /etc/default/zramswap
+		echo 'RESUME=none' >> /etc/initramfs-tools/conf.d/resume
+		systemctl enable zramswap
+		update-initramfs -u
 	fi
 
 	echo " "
@@ -844,12 +809,10 @@ function xanmod {
 
 	clear; RES16=$(reader 15)
 	echo -e "=============== XANMOD KERNEL =============== \n" 
-	
 	echo 'deb http://deb.xanmod.org releases main' | tee /etc/apt/sources.list.d/xanmod-kernel.list
 	wget -qO - https://dl.xanmod.org/gpg.key | apt-key --keyring /etc/apt/trusted.gpg.d/xanmod-kernel.gpg add -
 	apt update && apt install linux-xanmod -y
 	apt remove linux-image-amd64 -y
-
 	echo " "
 	echo -e "=============== OK =============== \n" 
 	read -r -p "$RES16"
@@ -867,9 +830,7 @@ function graphical {
 			KDE "KDE Desktop Environment" \
 			XORG "Minimal xorg Desktop" \
 			NOGUI "No install GUI" 2>"${GRAPHICALTEMP}"
-
 	menuitem=$(<"${GRAPHICALTEMP}")
-
 	case $menuitem in
 		XFCE) 
 			clear
@@ -912,24 +873,75 @@ function graphical {
 	esac
 }
 
+function rolling {
+
+	clear
+
+	echo -e "=============== ROLLING REPO =============== \n" 
+	
+	echo 'deb http://archive.ubuntu.com/ubuntu/ jammy main restricted' > /etc/apt/sources.list
+	echo 'deb http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted' >> /etc/apt/sources.list
+	echo 'deb http://archive.ubuntu.com/ubuntu/ jammy universe' >> /etc/apt/sources.list
+	echo 'deb http://archive.ubuntu.com/ubuntu/ jammy-updates universe' >> /etc/apt/sources.list
+	echo 'deb http://archive.ubuntu.com/ubuntu/ jammy multiverse' >> /etc/apt/sources.list
+	echo 'deb http://archive.ubuntu.com/ubuntu/ jammy-updates multiverse' >> /etc/apt/sources.list
+	echo 'deb http://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse' >> /etc/apt/sources.list
+	echo 'deb http://security.ubuntu.com/ubuntu jammy-security main restricted' >> /etc/apt/sources.list
+	echo 'deb http://security.ubuntu.com/ubuntu jammy-security universe' >> /etc/apt/sources.list
+	echo 'deb http://security.ubuntu.com/ubuntu jammy-security multiverse' >> /etc/apt/sources.list
+
+	apt -y autoclean
+	apt -y clean
+	apt -y update
+	apt -y dist-upgrade
+	apt -y autoremove
+	dpkg --add-architecture i386
+
+	touch /home/"$SUDOUSER"/.bash_aliases
+
+	if [ "$LANGUAGE" -eq 1 ]; then
+		echo "alias sudo='sudo '" > /home/"$SUDOUSER"/.bash_aliases
+		echo "alias apt='apt '" >> /home/"$SUDOUSER"/.bash_aliases
+		echo "alias update='update |& grep -v \"Conflicting distribution:\""
+		cp -v /home/"$SUDOUSER"/.bash_aliases /root/
+	else
+		echo "alias sudo='sudo '" > /home/"$SUDOUSER"/.bash_aliases
+		echo "alias apt='apt '" >> /home/"$SUDOUSER"/.bash_aliases
+		echo "alias update='update |& grep -v \"Distribución conflictiva:\""
+		cp -v /home/"$SUDOUSER"/.bash_aliases /root/
+	fi
+
+	echo " "
+	echo -e "=============== OK =============== \n" 
+	read -r -p "$RES16"
+
+}
+
 function ohmyzsh {
 
 	clear; RES16=$(reader 15)
+
 	echo -e "=============== OMZ =============== \n" 
-
 	touch /home/"$SUDOUSER"/omz.sh
-
 	echo '#!/bin/bash' > /home/"$SUDOUSER"/omz.sh
-	echo 'sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"' >> /home/"$SUDOUSER"/omz.sh
+	echo 'sh -c "$(wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"' >> /home/"$SUDOUSER"/omz.sh
 	echo 'sed -i -e "s/ZSH_THEME=.*/ZSH_THEME=\"pmcgee\"/" .zshrc' >> /home/"$SUDOUSER"/omz.sh
 	echo 'sed -i -e "/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true" .zshrc' >> /home/"$SUDOUSER"/omz.sh
-	echo 'sudo ln -s "$HOME"/.zshrc /root/.zshrc' >> /home/"$SUDOUSER"/omz.sh
-	echo 'sudo ln -s "$HOME"/.oh-my-zsh /root/.oh-my-zsh' >> /home/"$SUDOUSER"/omz.sh
 	echo 'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting' >> /home/"$SUDOUSER"/omz.sh
 	echo 'git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions' >> /home/"$SUDOUSER"/omz.sh
 	echo 'sed -i -e "s/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/" .zshrc' >> /home/"$SUDOUSER"/omz.sh
-
 	chown "$SUDOUSER" /home/"$SUDOUSER"/omz.sh
+	chmod +x /home/"$SUDOUSER"/omz.sh
+
+	echo '#!/bin/bash' > /root/omz.sh
+	echo 'sh -c "$(wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O -)"' >> /root/omz.sh
+	echo 'sed -i -e "s/ZSH_THEME=.*/ZSH_THEME=\"pmcgee\"/" .zshrc' >> /root/omz.sh
+	echo 'sed -i -e "/^source $ZSH.*/i ZSH_DISABLE_COMPFIX=true" .zshrc' >> /root/omz.sh
+	echo 'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting' >> /root/omz.sh
+	echo 'git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions' >> /root/omz.sh
+	echo 'sed -i -e "s/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/" .zshrc' >> /root/omz.sh
+	chmod +x /root/omz.sh
+
 	printer print 26
 	echo " "
 	echo -e "=============== OK =============== \n" 
@@ -1005,10 +1017,7 @@ function finisher {
 	clear; RES26=$(reader 25)
 	dialog --msgbox "$RES26" 7 50
 	rm -f /deb-setupper.sh &> /dev/null
-	clear
-	umount /boot/efi &> /dev/null
-	printer print 28;
-	exit
+	clear; printer print 28; exit 0
 
 }
 

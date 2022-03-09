@@ -36,7 +36,7 @@ EFIPART=""; SWAPPART=""
 SUDOUSER=""; LANGUAGE=0
 
 function corelive { clear; language; cover; sleep 1s; verify; diskenv; }
-function corechroot { configurator; hostnamer; localer; newuser; liquorix; graphical
+function corechroot { configurator; hostnamer; localer; newuser; graphical
 					drivers; aur; swapper; ohmyzsh; optimizations; software; finisher; }
 
 function printer() {
@@ -76,7 +76,7 @@ function printer() {
 		"=============== CONFIGURE GRUB =============== \n" 
 		"=============== START NETWORKMANAGER AND SSH SERVICES =============== \n" 
 		"=============== ADD A USER TO A SUDO GROUP =============== \n" 
-		"=============== AUR (YAY ASKS YOU YOUR PASSWORD, PAY ATTENTION) ===============  \n" 
+		"=============== AUR (CHAOTIC-AUR / XANMOD KERNEL) ===============  \n" 
 		"We create a script called omz.sh in your home directory, after reboot, use chmod +x at omz.sh"
 		"=============== OPTIMIZATIONS =============== \n" 
 		"We create a script called software.sh in your home directory, after reboot, use chmod +x at software.sh"
@@ -114,7 +114,7 @@ function printer() {
 		"=============== CONFIGURAR GRUB =============== \n" 
 		"=============== INICIAR NETWORKMANAGER Y SERVICIOS DE SSH =============== \n" 
 		"=============== AGREGAR UN USUARIO DE SUDO =============== \n" 
-		"=============== AUR (YAY PREGUNTA POR TU CONTRASEÑA, ESTATE ATENTO) ===============  \n" 
+		"=============== AUR (CHAOTIC-AUR / XANMOD KERNEL) ===============  \n" 
 		"Hemos creado un script llamado omz.sh en tu carpeta de home, después de reiniciar, usa chmod +x omz.sh"
 		"=============== OPTIMIZACIONES =============== \n" 
 		"Hemos creado un script llamado software.sh en tu carpeta de home, después de reiniciar, usa chmod +x software.sh"
@@ -424,7 +424,7 @@ function diskverify() {
 	LABEL=$(blkid -o value -s PTTYPE "$1")
 	EFI=""; EFIORDER=""; BLOCK=""
 
-	if [ "$LABEL" == "dos" ]; then printer error 12; exit 1; fi
+	if [ "$LABEL" == "dos" ]; then clear; printer error 12; exit 1; fi
 	if [[ $1 =~ sd[[:alpha:]] ]]; then
 		EFI=$(fdisk -l "$1" | sed -ne '/EFI/p')
 		EFIORDER=$(echo "$EFI" | sed -ne '/[[:alpha:]]1/p' )
@@ -575,8 +575,8 @@ function swapmenu() {
 			fi
 		done
 		if [ "$COUNTMOUNT" -eq $COUNT ]; then clear; printer error 18; exit 1; fi
-		dialog --clear --backtitle "036 Creative Studios" --title "$RES12" \
-			--menu "$RES13" 15 50 4 "${SWAPPARTS[@]}" 2>"${SWAPPARTMENUTEMP}"
+			dialog --clear --backtitle "036 Creative Studios" --title "$RES12" \
+				--menu "$RES13" 15 50 4 "${SWAPPARTS[@]}" 2>"${SWAPPARTMENUTEMP}"
 		CHOICE=$(<"${SWAPPARTMENUTEMP}")
 		case $CHOICE in
 			"$CHOICE") SWAPPART="$CHOICE"; diskformat "$CHOICE" ;;
@@ -631,6 +631,8 @@ function pacstraper {
 
 	RES16=$(reader 15); clear; printer print 23;
 
+	reflector --verbose --latest 5 --sort rate --save /etc/pacman.d/mirrorlist &> /dev/null
+
 	pacstrap /mnt base linux linux-firmware \
 	linux-headers nano sudo vi vim git wget \
 	grub efibootmgr reflector os-prober rsync \
@@ -651,16 +653,8 @@ function toggler {
 	arch-chroot /mnt ./arch-setupper.sh chroot $DISKENVIRONMENT $LANGUAGE
 	if [ -f /mnt/arch-setupper.sh ]; then
 		printer error 24; printer print 25; exit 1
-    fi
+	else printer print 25; exit 0; fi
 	
-	if [ $DISKENVIRONMENT == "HDD" ]; then
-		umount "$ROOTPART"; swapoff "$SWAPPART"
-	elif [ $DISKENVIRONMENT == "SSD" ]; then
-		umount "$ROOTPART"
-	fi
-	printer print 22; exit 0
-
-	exit 0
 }
 
 function configurator {
@@ -792,25 +786,6 @@ function newuser {
 	read -r -p "$RES16"
 }
 
-function liquorix {
-
-	clear; RES16=$(reader 15)
-	echo -e "=============== LIQUORIX KERNEL =============== \n" 
-	
-	sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
-	sed -i 's/^SigLevel    = Required DatabaseOptional$/SigLevel = PackageOptional/' \
-		/etc/pacman.conf &> /dev/null
-	echo "[liquorix]" >> /etc/pacman.conf
-	echo 'Server = https://liquorix.net/archlinux/$repo/$arch' >> /etc/pacman.conf
-
-	pacman -Syyu linux-lqx linux-lqx-headers --noconfirm
-	grub-mkconfig -o /boot/grub/grub.cfg
-
-	echo " "
-	echo -e "=============== OK =============== \n" 
-	read -r -p "$RES16"
-}
-
 function graphical {
 
 	clear; RES16=$(reader 15); RES21=$(reader 20)
@@ -905,7 +880,7 @@ function drivers {
 		Intel) 
 			clear
 			echo -e "=============== INTEL =============== \n" 
-			pacman -S xf86-video-intel intem-media-driver intel-media-sdk lib32-mesa --noconfirm
+			pacman -S xf86-video-intel intel-media-driver intel-media-sdk lib32-mesa --noconfirm
 			echo " "
 			echo -e "=============== OK =============== \n" 
 			read -r -p "$RES16"
@@ -951,10 +926,15 @@ function aur {
 
 	clear; RES16=$(reader 15)
 	printer print 30;
-	pacman -S --needed fakeroot packer go --noconfirm
-	sudo -u "$SUDOUSER" bash -c 'cd; git clone https://aur.archlinux.org/yay-bin.git'
-	sudo -u "$SUDOUSER" bash -c 'cd; cd yay-bin; makepkg -si'
-	sudo -u "$SUDOUSER" bash -c 'cd; rm -rf yay-bin'
+	pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com
+	pacman-key --lsign-key FBA220DFC880C036
+	pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' \
+		'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' --noconfirm
+	sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
+	echo '[chaotic-aur]' >> /etc/pacman.conf
+	echo 'Include = /etc/pacman.d/chaotic-mirrorlist' >> /etc/pacman.conf
+	pacman -Syyu yay powerpill linux-xanmod-anbox linux-xanmod-anbox-headers --noconfirm
+	grub-mkconfig -o /boot/grub/grub.cfg
 	echo " "
 	echo -e "=============== OK =============== \n" 
 	read -r -p "$RES16"
