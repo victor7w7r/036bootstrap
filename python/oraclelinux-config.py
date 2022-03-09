@@ -194,11 +194,11 @@ def verify() -> None:
     except: utils.clear(); printer("error",5); exit(1)
     
     printer("print",6)      
-    call("dnf update --assumeyes &> /dev/null", shell=True)
+    system("dnf update --assumeyes &> /dev/null")
     
     if not commandverify("dialog"):
         printer("print",7)
-        call("dnf install dialog --assumeyes &> /dev/null", shell=True)
+        system("dnf install dialog --assumeyes &> /dev/null")
         
     printer("print",8)     
     
@@ -211,7 +211,7 @@ def verify() -> None:
 def packages() -> None:
     
     utils.clear(); printer("print",9)
-    utils.live_tasker("dnf -y install wget zsh")
+    system("dnf -y install wget zsh")
     print("=============== OK =============== \n")
     input(reader(0))
     
@@ -219,25 +219,25 @@ def hostnamer() -> None:
     
     response = d.inputbox(reader(1), 8, 80)
     if response[0] == "ok":
-        call("hostnamectl set-hostname " + response[1], shell=True)
+        system("hostnamectl set-hostname " + response[1])
     elif response[0] == "cancel": exit(0) 
 
 def localer() -> None:
     
     choices = [("Spanish/Español","es"),("English","us")]
     d.msgbox(reader(2),9,50)
-    call("timedatectl set-timezone America/Guayaquil", shell=True)
+    system("timedatectl set-timezone America/Guayaquil")
     response = d.menu(reader(0), 15, 50, 4, choices)
     if response[0] == "ok" and response[1] == "Spanish/Español":
-        call("localectl set-keymap es", shell=True)
+        system("localectl set-keymap es")
     elif response[0] == "ok" and response[1] == "English":
-        call("localectl set-keymap us", shell=True)
+        system("localectl set-keymap us")
     else: utils.clear(); exit(0)
     
 def cockpit() -> None:
     
     utils.clear(); printer("print",10)
-    utils.live_tasker("systemctl enable --now cockpit.socket")
+    system("systemctl enable --now cockpit.socket")
     print(" ")
     print("=============== OK =============== \n")
     input(reader(0))
@@ -252,19 +252,19 @@ def graphical() -> None:
         XRDPTOGGLE=1; utils.clear()
         print("=============== EPEL & XFCE =============== \n")
         
-        utils.live_tasker("dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm --assumeyes")
-        utils.live_tasker("dnf update --assumeyes")
-        utils.live_tasker('dnf groupinstall "base-x" --assumeyes')
-        utils.live_tasker('dnf groupinstall "xfce" --assumeyes')
-        utils.live_tasker("dnf install xfce4-whiskermenu-plugin --assumeyes")
+        system("dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm --assumeyes")
+        system("dnf update --assumeyes")
+        system('dnf groupinstall "base-x" --assumeyes')
+        system('dnf groupinstall "xfce" --assumeyes')
+        system("dnf install xfce4-whiskermenu-plugin --assumeyes")
         
-        call("touch /root/.xinitrc", shell=True)
+        system("touch /root/.xinitrc")
         with open('/root/.xinitrc', 'w') as f: f.write('xfce4-session')
         
         for HOME in LISTHOME:
-            call(f"touch /home/{HOME}/.xinitrc", shell=True)
+            system(f"touch /home/{HOME}/.xinitrc")
             with open(f'/home/{HOME}/.xinitrc', 'w') as f: f.write('xfce4-session')
-            call(f'chown {HOME} /home/{HOME}/.xinitrc', shell=True)
+            system(f'chown {HOME} /home/{HOME}/.xinitrc')
         
         print(" ")
         print("=============== OK =============== \n")
@@ -272,7 +272,7 @@ def graphical() -> None:
     else:
         utils.clear()
         print("=============== EPEL =============== \n")
-        utils.live_tasker("dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm --assumeyes")
+        system("dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm --assumeyes")
         print(" ")
         print("=============== OK =============== \n")
         input(reader(0))
@@ -282,7 +282,7 @@ def drivers() -> None:
     utils.clear()
     if d.yesno(reader("6"),8,60) == d.OK :
         utils.clear()
-        utils.live_tasker('dnf install open-vm-tools open-vm-tools-desktop --assumeyes')
+        system('dnf install open-vm-tools open-vm-tools-desktop --assumeyes')
     else: utils.clear()
 
 def remote() -> None:
@@ -293,29 +293,29 @@ def remote() -> None:
     utils.clear()
     if d.yesno(reader(7),8,60) == d.OK :
         utils.clear(); printer("print",11)
-        call(f"sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin yes/' /etc/ssh/sshd_config &> /dev/null", shell=True)
-        utils.live_tasker('systemctl enable sshd')
-        utils.live_tasker('systemctl restart sshd')
+        system(f"sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin yes/' /etc/ssh/sshd_config &> /dev/null")
+        system('systemctl enable sshd')
+        system('systemctl restart sshd')
         print(" ")
         print("=============== OK =============== \n")
         input(reader(0))
     utils.clear()
     if XRDPTOGGLE == 1:
         print("=============== XRDP ===============  \n")
-        utils.live_tasker('dnf install xrdp --assumeyes')
+        system('dnf install xrdp --assumeyes')
     
         for HOME in LISTHOME:
-            call(f"touch /home/{HOME}/.Xclients", shell=True)
+            system(f"touch /home/{HOME}/.Xclients")
             with open(f'/home/{HOME}/.Xclients', 'w') as f: f.write('xfce4-session')
-            call(f'chmod a+x /home/{HOME}/.Xclients', shell=True)
-            call(f'chown {HOME} /home/{HOME}/.Xclients', shell=True)
+            system(f'chmod a+x /home/{HOME}/.Xclients')
+            system(f'chown {HOME} /home/{HOME}/.Xclients')
         
-        utils.live_tasker('systemctl enable xrdp')
-        utils.live_tasker('systemctl enable xrdp-sesman')
-        utils.live_tasker('firewall-cmd --permanent --add-port=3389/tcp')
-        utils.live_tasker('firewall-cmd --reload')
-        utils.live_tasker('chcon --type=bin_t /usr/sbin/xrdp')
-        utils.live_tasker('chcon --type=bin_t /usr/sbin/xrdp-sesman')
+        system('systemctl enable xrdp')
+        system('systemctl enable xrdp-sesman')
+        system('firewall-cmd --permanent --add-port=3389/tcp')
+        system('firewall-cmd --reload')
+        system('chcon --type=bin_t /usr/sbin/xrdp')
+        system('chcon --type=bin_t /usr/sbin/xrdp-sesman')
 
         print(" ")
         print("=============== OK =============== \n")
@@ -327,21 +327,21 @@ def kvm() -> None:
     if d.yesno(reader(8),8,60) == d.OK:
         utils.clear()
         print("=============== KVM ===============  \n" )
-        utils.live_tasker('dnf config-manager --enable ol8_appstream ol8_kvm_appstream ol8_developer_EPEL')
-        utils.live_tasker('dnf module install virt --assumeyes')
-        utils.live_tasker('dnf install virt-install virt-viewer virt-manager edk2-ovmf virt-v2v cockpit-machines --assumeyes')
-        utils.live_tasker('virt-host-validate qemu')
-        utils.live_tasker('systemctl enable libvirtd')
-        utils.live_tasker('systemctl start libvirtd')
-        utils.live_tasker('dnf config-manager --add-repo https://www.kraxel.org/repos/firmware.repo')
-        utils.live_tasker('dnf install edk2.git-ovmf-x64 --assumeyes')
+        system('dnf config-manager --enable ol8_appstream ol8_kvm_appstream ol8_developer_EPEL')
+        system('dnf module install virt --assumeyes')
+        system('dnf install virt-install virt-viewer virt-manager edk2-ovmf virt-v2v cockpit-machines --assumeyes')
+        system('virt-host-validate qemu')
+        system('systemctl enable libvirtd')
+        system('systemctl start libvirtd')
+        system('dnf config-manager --add-repo https://www.kraxel.org/repos/firmware.repo')
+        system('dnf install edk2.git-ovmf-x64 --assumeyes')
         with open('/etc/libvirt/qemu.conf', 'a') as f: 
             f.writelines(["nvram = [\n",
                         '   "/usr/edk.git/OVMF_CODE.fd:/usr/edk.git/OVMF_VARS.fd"\n',
                         "]"])
-        utils.live_tasker('systemctl restart libvirtd')
-        utils.live_tasker('systemctl enable serial-getty@ttyS0.service')
-        utils.live_tasker('systemctl start serial-getty@ttyS0.service')
+        system('systemctl restart libvirtd')
+        system('systemctl enable serial-getty@ttyS0.service')
+        system('systemctl start serial-getty@ttyS0.service')
     else: utils.clear(); return
         
 def ohmyzsh() -> None:
@@ -350,7 +350,7 @@ def ohmyzsh() -> None:
     LISTHOME: list = Popen("ls /home", shell=True, stdout=PIPE).stdout.read().decode('utf-8').rstrip().split('\n')
     print("=============== OMZ =============== \n")
     for HOME in LISTHOME:
-        call(f"touch /home/{HOME}/omz.sh")
+        system(f"touch /home/{HOME}/omz.sh")
         with open(f'/home/{HOME}/omz.sh', 'w') as f: 
             f.writelines([
                 "#!/bin/bash\n",
@@ -363,9 +363,9 @@ def ohmyzsh() -> None:
                 "\n",
                 "sed -i -e 's/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/' .zshrc"
                 ])
-        call(f'chown {HOME} /home/{HOME}/omz.sh', shell=True)
-        call(f'chmod +x /home/{HOME}/omz.sh', shell=True)
-    call("touch /root/omz.sh'")
+        system(f'chown {HOME} /home/{HOME}/omz.sh')
+        system(f'chmod +x /home/{HOME}/omz.sh')
+    system("touch /root/omz.sh'")
     with open('/root/omz.sh', 'w') as f: 
         f.writelines([
             "#!/bin/bash\n",
@@ -379,7 +379,7 @@ def ohmyzsh() -> None:
             "sed -i -e 's/plugins=(.*/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/' .zshrc"
         ])
         
-    call(f'chmod +x /root/omz.sh', shell=True)
+    system(f'chmod +x /root/omz.sh')
 
     printer("print",12)
 
@@ -388,19 +388,19 @@ def ohmyzsh() -> None:
     input(reader(0))
     
 def software() -> None:
+    
     utils.clear()
-
     if d.yesno(reader(10)+"""\n -> baobab \n -> ntfs-3g \n -> gparted \n -> nautilus \n -> gedit \n -> tar \n -> yum-utils \n -> numix-gtk-theme \n -> numix-icon-theme \n -> numix-icon-theme-circle
             """ ,20,65) == d.OK:
         utils.clear()
         print("=============== SOFTWARE =============== \n")
         
-        utils.live_tasker('dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm --assumeyes')
-        utils.live_tasker('dnf install numix-gtk-theme --assumeyes')
-        utils.live_tasker('dnf install http://mirror.centos.org/centos/7/os/x86_64/Packages/gnome-icon-theme-3.12.0-1.el7.noarch.rpm --assumeyes')
-        utils.live_tasker('dnf install numix-icon-theme --assumeyes')
-        utils.live_tasker('dnf install numix-icon-theme-circle --assumeyes')
-        utils.live_tasker('dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm --assumeyes')
+        system('dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm --assumeyes')
+        system('dnf install numix-gtk-theme --assumeyes')
+        system('dnf install http://mirror.centos.org/centos/7/os/x86_64/Packages/gnome-icon-theme-3.12.0-1.el7.noarch.rpm --assumeyes')
+        system('dnf install numix-icon-theme --assumeyes')
+        system('dnf install numix-icon-theme-circle --assumeyes')
+        system('dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm --assumeyes')
 
         print(" ")
         print("=============== OK =============== \n")
@@ -426,17 +426,7 @@ class utils:
         finally:
             tcsetattr(fd, TCSADRAIN, oldSettings)
         return answer
-    
-    def live_tasker(cmd: str) -> int:
-        task = Popen(cmd, stdout=PIPE, stderr=PIPE, encoding='utf8', shell=True)
-        try:  
-            while task.poll() is None:
-                for line in task.stdout:
-                    task.stdout.flush()
-                    print(line.replace("\n", ""))
-            return task.poll()
-        except: return 1
-    
+
     def spinning():
         while True:
             for cursor in '|/-\\':
