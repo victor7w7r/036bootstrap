@@ -83,7 +83,7 @@ If you are using python, please install python-pip and install pythondialog
 
 ```bash
 pacman -Sy
-pacman -S git python-pip
+pacman -S git python-pip dialog
 git clone https://github.com/victor7w7r/036bootstrap/
 cd ./python/036bootstrap
 pip install pythondialog
