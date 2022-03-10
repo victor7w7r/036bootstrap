@@ -165,7 +165,7 @@ chmod +x oraclelinux-config
 
 ```bash
 dnf update -y
-dnf install git python39 python39-pip -y
+dnf install git dialog python39 python39-pip -y
 python3.9 -m pip install pythondialog
 git clone https://github.com/victor7w7r/036bootstrap/
 cd ./036bootstrap/python
