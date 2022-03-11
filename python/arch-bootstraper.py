@@ -651,7 +651,7 @@ def configurator() -> None:
         
     system("systemctl enable NetworkManager")
     system("systemctl enable sshd")
-    system(r"sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin Yes/' /etc/ssh/sshd_config &> /dev/null")
+    system(r"sed -i 's/^#PermitRootLogin\s.*$/PermitRootLogin yes/' /etc/ssh/sshd_config &> /dev/null")
     
     print(" ")
     print("=============== OK =============== \n")
@@ -858,6 +858,8 @@ def aur() -> None:
             'Include = /etc/pacman.d/chaotic-mirrorlist'
         ])
     system("pacman -Syyu yay powerpill linux-xanmod-anbox linux-xanmod-anbox-headers --noconfirm")
+    system("pacman -S --needed base-devel fakeroot packer --noconfirm")
+    
     system("grub-mkconfig -o /boot/grub/grub.cfg")
     print(" ")
     print("=============== OK =============== \n")
@@ -872,7 +874,9 @@ def swapper() -> None:
         with open('/etc/sysctl.d/99-sysctl.conf', 'a') as f: 
             f.write("vm.swappiness=60")
     if DISKENVIRONMENT == "SSD":
-        system(f"sudo -u {SUDOUSER} bash -c 'yay -S zramswap'")
+        system(f"sudo -u {SUDOUSER} bash -c 'cd; git clone https://aur.archlinux.org/zramswap.git'")
+        system(f"sudo -u {SUDOUSER} bash -c 'cd; cd zramswap; makepkg -si'") 
+        system(f"sudo -u {SUDOUSER} bash -c 'cd; rm -rf zramswap'")
         system("systemctl enable zramswap.service")
     
     print(" ")

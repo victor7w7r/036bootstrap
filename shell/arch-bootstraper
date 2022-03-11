@@ -932,6 +932,7 @@ function aur {
 	echo '[chaotic-aur]' >> /etc/pacman.conf
 	echo 'Include = /etc/pacman.d/chaotic-mirrorlist' >> /etc/pacman.conf
 	pacman -Syyu yay powerpill linux-xanmod-anbox linux-xanmod-anbox-headers --noconfirm
+	pacman -S --needed base-devel fakeroot packer --noconfirm
 	grub-mkconfig -o /boot/grub/grub.cfg
 	echo " "
 	echo -e "=============== OK =============== \n" 
@@ -947,7 +948,9 @@ function swapper {
 	if [ $DISKENVIRONMENT == "HDD" ]; then
 		echo "vm.swappiness=60" >> /etc/sysctl.d/99-sysctl.conf
 	elif [ $DISKENVIRONMENT == "SSD" ]; then
-		sudo -u "$SUDOUSER" bash -c 'yay -S zramswap'
+		sudo -u "$SUDOUSER" bash -c 'cd; git clone https://aur.archlinux.org/zramswap.git'
+		sudo -u "$SUDOUSER" bash -c 'cd; cd zramswap; makepkg -si'
+		sudo -u "$SUDOUSER" bash -c 'cd; rm -rf zramswap'
 		systemctl enable zramswap.service
 	fi
 	

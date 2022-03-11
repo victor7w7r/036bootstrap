@@ -395,6 +395,7 @@ def software() -> None:
         utils.clear()
         print("=============== SOFTWARE =============== \n")
         
+        system('dnf install baobab ntfs-3g gparted exfatprogs nautilus gedit tar yum-utils --assumeyes')
         system('dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm --assumeyes')
         system('dnf install numix-gtk-theme --assumeyes')
         system('dnf install http://mirror.centos.org/centos/7/os/x86_64/Packages/gnome-icon-theme-3.12.0-1.el7.noarch.rpm --assumeyes')

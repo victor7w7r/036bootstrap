@@ -54,8 +54,8 @@ parted --script /dev/sda \
 
 - I recommend to use python scripts, works at 100% similar than bash scripts, the performance in python is better
 - Static typing is enabled by default, please run your scripts with python3 only
-- Ubuntu rolling is not available and suitable for python, only shell 
-- Only one module is required, please install pythondialog locally
+- Ubuntu rolling is not available and suitable for python, only shell
+- Only one module is required, please install pythondialog as root
 
 ```bash
 $ pip install pythondialog
@@ -68,24 +68,22 @@ $ pip install pythondialog
 
 - :heavy_check_mark: **Use in Arch Linux Live CD, Arch Linux installed systems or Manjaro**
 
-If you are use Arch Linux Live CD you must update the repositories and install git, like this (run as superuser)
+If you are use Arch Linux Live CD you must update the repositories and install git, like this (run as root)
 
 ```bash
-pacman -Sy
-pacman -S git
+pacman -Sy git
 git clone https://github.com/victor7w7r/036bootstrap/
 cd ./036bootstrap/shell
 chmod +x arch-bootstraper
 ./arch-bootstraper # If you are not superuser, use with sudo
 ```
 
-If you are using python, please install python-pip and install pythondialog
+If you are using python, please install python-pip and install pythondialog (run as root)
 
 ```bash
-pacman -Sy
-pacman -S git python-pip
+pacman -Sy git python-pip dialog
 git clone https://github.com/victor7w7r/036bootstrap/
-cd ./python/036bootstrap
+cd ./036bootstrap/python
 pip install pythondialog
 python3 arch-bootstraper.py # If you are not superuser, use with sudo
 ```
@@ -150,7 +148,7 @@ dpkg-reconfigure locales
 - :warning: **This is not a bootstraper**
   - This script assumes that Oracle Linux is installed
 
-You must update the repositories like this and install git, like this (run as superuser)
+You must update the repositories like this and install git, like this (run as root)
 
 ```bash
 dnf update -y
@@ -161,11 +159,11 @@ chmod +x oraclelinux-config
 ./oraclelinux-config #(If you are not superuser, use with sudo)
 ```
 
-:warning: For python please install these packages, and use like this
+:warning: For python please install these packages, and use like this (run as root)
 
 ```bash
 dnf update -y
-dnf install git python39 python39-pip -y
+dnf install git python39 python39-pip dialog -y
 python3.9 -m pip install pythondialog
 git clone https://github.com/victor7w7r/036bootstrap/
 cd ./036bootstrap/python
